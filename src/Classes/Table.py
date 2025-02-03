@@ -20,3 +20,16 @@ class Table:
             can_fit = can_fit and self.bookings[reservation_request.start_slot + i] == 0
 
         return can_fit
+
+    def get_wasted_table_count(self, minimum_booking_length):
+        wasted_table_count = 0
+        empty_count = 0
+        for slot in self.booking:
+            if slot != 0:
+                if empty_count < minimum_booking_length and empty_count > 0:
+                    wasted_table_count += 1
+                empty_count = 0
+                continue
+            empty_count += 1
+        return wasted_table_count
+            

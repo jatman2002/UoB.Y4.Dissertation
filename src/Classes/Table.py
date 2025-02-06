@@ -2,25 +2,27 @@ import numpy as np
 from Classes import ReservationRequest
 
 class Table:
-    def __init__(self, table_code, min_covers, max_covers, reservations):
+    def __init__(self, table_code, min_covers, max_covers, slot_count):
         self.table_code = table_code
         self.min_covers = min_covers
         self.max_covers = max_covers
-        self.reservations = reservations
+        self.reservations = [None] * slot_count
 
 
     def deepcopy(self):
-        return Table(self.table_code, self.min_covers, self.max_covers, self.reservations.copy())
+        t =  Table(self.table_code, self.min_covers, self.max_covers, len(self.reservations))
+        t.reservations = self.reservations.copy()
+        return t
 
     def assign_reservation(self, reservation_request):
         for i in range(reservation_request.duration):
-            self.reservations[reservation_request.start_slot + i] = reservation_request.booking_code
+            self.reservations[reservation_request.start_slot + i] = reservation_request
         reservation_request.assigned = True
 
     def can_fit_reservation(self, reservation_request):
         can_fit = True
         for i in range(reservation_request.duration):
-            can_fit = can_fit and self.reservations[reservation_request.start_slot + i] == 0
+            can_fit = can_fit and self.reservations[reservation_request.start_slot + i] == None
 
         return can_fit
 

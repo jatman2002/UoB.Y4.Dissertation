@@ -7,7 +7,7 @@ def run(restaurant_state):
     for request in restaurant_state.reservation_requests:
         allocated_reservations = get_allocated_reservations(restaurant_state)
         sort_list(allocated_reservations)
-        restaurant_state = reallocate(restaurant_state)
+        restaurant_state = reallocate(restaurant_state, allocated_reservations)
 
         find_best_table(request, restaurant_state)
 
@@ -28,19 +28,19 @@ def get_allocated_reservations(restaurant_state):
 
 
 def sort_list(allocated_reservations):
-    ''' based on booking date and time - earliest first '''
+    allocated_reservations.sort(key=lambda r: r.start_slot)
     pass
 
 
 def clear_bookings(state, to_remove):
     for table in state.tables:
-        for slot in table.reservations:
-            if slot != None and slot in to_remove:
-                slot = None
+        for slot in range(len(table.reservations)):
+            if table.reservations[slot] != None and table.reservations[slot] in to_remove:
+                table.reservations[slot] = None
 
 
 def reallocate(restaurant_state, allocated_reservations):
-    state = restaurant_state.copy()
+    state = restaurant_state.deepcopy()
     clear_bookings(state, allocated_reservations)
 
     for reservation in allocated_reservations:
@@ -62,7 +62,7 @@ def find_best_table(request, state):
             continue
         if not (table.min_covers <= request.guest_count or request.guest_count <= table.max_covers):
             continue
-        wasted_slots = get_wasted_slots(table, request)
+        wasted_slots = get_wasted_slots(state, table, request)
         if wasted_slots < leastWastedSlots:
             best_table = table
             leastWastedSlots = wasted_slots
@@ -90,7 +90,7 @@ def get_wasted_slots(state, table, request):
 
     wasted_slots_after = 0
     slot = end_slot + 1
-    while slot < end_slot + state.minimum_booking_length and slot <= state.slot_count:
+    while slot <= end_slot + state.minimum_booking_length and slot <= state.slot_count:
         if table.reservations[slot] is not None:
             break
         wasted_slots_after += 1

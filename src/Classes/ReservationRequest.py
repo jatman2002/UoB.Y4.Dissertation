@@ -1,7 +1,7 @@
 import numpy as np
 
 class ReservationRequest:
-    def __init__(self, booking_code, booking_date, start_slot, duration, guest_count, created_on, assigned=False):
+    def __init__(self, booking_code, guest_count, booking_date, start_slot, duration, created_on, assigned=False):
         self.booking_code = booking_code
         self.booking_date = booking_date
         self.start_slot = start_slot

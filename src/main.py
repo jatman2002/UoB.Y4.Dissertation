@@ -6,8 +6,16 @@ restaurant = RestaurantState(36000, 64, 15, 6)
 
 parse_tables(restaurant, 'C:/git/UoB.Y4.Dissertation/src/Restaurant-1/tables.csv')
 
-restaurant.reservation_requests = parse_reservations(restaurant, 'C:/git/UoB.Y4.Dissertation/src/Restaurant-1/reservations.csv')
+all_requests = parse_reservations(restaurant, 'C:/git/UoB.Y4.Dissertation/src/Restaurant-1/reservations.csv')
 
-run(restaurant)
+for day in all_requests:
 
-output_schedule(restaurant)
+    print(f'STARTING DAY {all_requests.index(day)} / {len(all_requests)}')
+
+    r = restaurant.deepcopy()
+
+    r.reservation_requests = day
+
+    r = run(r)
+
+    output_schedule(r, day[0].booking_date)

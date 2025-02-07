@@ -16,16 +16,17 @@ def parse_reservations(restaurant, file): #'C:/git/UoB.Y4.Dissertation/src/Resta
         next(reader, None)
 
         #------testing with one day------#
-        next(reader, None)
-        next(reader, None)
-        next(reader, None)
-        next(reader, None)
+        # next(reader, None)
+        # next(reader, None)
+        # next(reader, None)
+        # next(reader, None)
         #--------------------------------#
 
         requests = []
+        day_requests = []
 
         # change this to datetime.min
-        current_date = datetime.strptime('2017-10-02', '%Y-%m-%d').date()
+        current_date = datetime.min
 
         for row in reader:
 
@@ -34,10 +35,14 @@ def parse_reservations(restaurant, file): #'C:/git/UoB.Y4.Dissertation/src/Resta
 
             booking_date = datetime.strptime(row[2], '%Y-%m-%d').date()
 
-            # change continue to adding to a 2d array maybe?
-            # or do what i did before and create a per day list wrapper?
+            # if booking_date != datetime.strptime('2020-08-31', '%Y-%m-%d').date():
+            #     continue
+
             if booking_date != current_date:
-                continue
+                current_date = booking_date
+                if len(day_requests) > 0:
+                    requests.append(day_requests)
+                day_requests = []
 
             start_slot = convert_time_to_slot(int(row[3]) - restaurant.opening_time, restaurant.slot_length)
             duration = convert_time_to_slot(int(row[4]), restaurant.slot_length)
@@ -45,8 +50,7 @@ def parse_reservations(restaurant, file): #'C:/git/UoB.Y4.Dissertation/src/Resta
 
             request = ReservationRequest(booking_code, guest_count, booking_date, start_slot, duration, created_on)
 
-            requests.append(request)
-
+            day_requests.append(request)
 
     return requests
 
@@ -71,8 +75,8 @@ def parse_tables(restaurant, file): #'C:/git/UoB.Y4.Dissertation/src/Restaurant-
 
 
 
-def output_schedule(restaurant):
-    with open('C:/git/UoB.Y4.Dissertation/src/output.csv', 'w', newline='') as csvfile:
+def output_schedule(restaurant, day):
+    with open('C:/git/UoB.Y4.Dissertation/src/outputs/' + day.strftime('%Y-%m-%d') + '.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
 
         output = []

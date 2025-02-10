@@ -47,7 +47,7 @@ def reallocate(restaurant_state, allocated_reservations):
         if not find_best_table(reservation, state):
             new_allocated_reservations = allocated_reservations.copy()
             new_allocated_reservations.remove(reservation)
-            new_allocated_reservations = reallocate(state, new_allocated_reservations)
+            state = reallocate(state, new_allocated_reservations)
             break
     
     return state

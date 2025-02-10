@@ -37,41 +37,54 @@ X_train, X_test, y_train, y_test, label_encoder = get_x_y_sets(tables, train_dat
 classifier = RandomForestClassifier(n_estimators=50, max_depth=10)
 classifier.fit(X_train, y_train)
 
-y_pred = classifier.predict(X_test)
-y_pred = label_encoder.inverse_transform(y_pred)
+
+# List of unique dates
+unique_dates = test_data["BookingDate"].dt.date.unique()
+for date in unique_dates:
+    reservations_per_day = X_test.loc[test_data['BookingDate'] == date.strftime('%Y-%m-%d')]
+    for i, reservation in reservations_per_day.iterrows():
+        classifier.predict(reservation)
+
+
+#---------------------------------------
+
+# y_pred = classifier.predict(X_test)
+# y_pred = label_encoder.inverse_transform(y_pred)
 # print(y_pred)
 
 # accuracy = accuracy_score(y_test, y_pred)
 # print(f"Accuracy: {accuracy:.2f}")
 
-output_data = test_data
-output_data['TableCode'] = y_pred
+#-----------------------------
+
+# output_data = test_data
+# output_data['TableCode'] = y_pred
 
 
-diary = []
-for table in range(len(tables)):
-    diary.append([None] * 64)
+# diary = []
+# for table in range(len(tables)):
+#     diary.append([None] * 64)
 
-current_date = None
+# current_date = None
 
-for index, booking in output_data.iterrows():
+# for index, booking in output_data.iterrows():
 
-    if current_date != booking['BookingDate']:
+#     if current_date != booking['BookingDate']:
 
-        if current_date != None:
-            # write csv
-            write_schedule(diary, tables['TableCode'].tolist(), current_date)
+#         if current_date != None:
+#             # write csv
+#             write_schedule(diary, tables['TableCode'].tolist(), current_date)
 
-        current_date = booking['BookingDate']
+#         current_date = booking['BookingDate']
 
-        diary = []
-        for table in range(len(tables)):
-            diary.append([None] * 64)
+#         diary = []
+#         for table in range(len(tables)):
+#             diary.append([None] * 64)
     
 
-    table_index = tables.index[tables['TableCode'] == booking['TableCode']].tolist()[0]
-    start_slot = convert_time_to_slot(booking['BookingTime'] - 36000, 15)
-    duration_in_slots = convert_time_to_slot(booking['Duration'], 15)
+#     table_index = tables.index[tables['TableCode'] == booking['TableCode']].tolist()[0]
+#     start_slot = convert_time_to_slot(booking['BookingTime'] - 36000, 15)
+#     duration_in_slots = convert_time_to_slot(booking['Duration'], 15)
 
-    for i in range(duration_in_slots):
-        diary[table_index][start_slot + i] = str(booking['BookingCode']) + ' - ' + str(duration_in_slots)
+#     for i in range(duration_in_slots):
+#         diary[table_index][start_slot + i] = str(booking['BookingCode']) + ' - ' + str(duration_in_slots)

@@ -2,79 +2,70 @@ import pandas as pd
 import numpy as np
 
 def timing_fit(table, diary, start_slot, duration):
-    for i in range(duration):
-        if diary[table.name][start_slot + i] != None:
-            return False
-    return True
+    return all(diary[table][start_slot:start_slot + duration] == None)
 
 def tables_can_fit(tables, reservation, diary, start_slot, duration):
-    size = (tables['MinCovers'] <= reservation['GuestCount']) & (reservation['GuestCount'] <= tables['MaxCovers'])
-    timing = tables.loc[size].apply(lambda table: timing_fit(table, diary, start_slot, duration), axis=1)
+    size_mask = (tables['MinCovers'] <= reservation['GuestCount']) & (reservation['GuestCount'] <= tables['MaxCovers'])
+    available_tables = np.array([timing_fit(i, diary, start_slot, duration) for i in range(len(tables))])
+    return size_mask & available_tables
 
-    return size & timing
 
-def convert_to_slot(time):
-    return time // (60*15)
+restaurant_opening_time = 36000
+restaurant_name = 'Restaurant-1'
 
-# Import the data
-reservations = pd.read_csv('C:/git/UoB.Y4.Dissertation/src/Restaurant-1/reservations.csv')
-existing =  pd.read_csv('C:/git/UoB.Y4.Dissertation/src/Restaurant-1/existing.csv')
-tables = pd.read_csv('C:/git/UoB.Y4.Dissertation/src/Restaurant-1/tables.csv')
+# Load data
+reservations = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/{restaurant_name}/reservations.csv')
+existing = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/{restaurant_name}/existing.csv')
+tables = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/{restaurant_name}/tables.csv')
 
-# Merge existing with reservations to get CreatedOn
-reservations = pd.merge(reservations, existing, on='BookingCode', suffixes=("_left", "_right"))
-reservations = reservations.drop('GuestCount_right', axis=1).drop('BookingDate_right', axis=1).drop('BookingTime_right', axis=1).drop('Duration_right', axis=1)
-
+# Merge reservations with existing
+reservations = reservations.merge(existing, on='BookingCode', suffixes=("_left", "_right")).drop(columns=['GuestCount_right', 'BookingDate_right', 'BookingTime_right', 'Duration_right'])
 reservations.columns = reservations.columns.str.replace("_left", "", regex=False)
+reservations = reservations.merge(tables, on="TableCode", how="left").drop(columns=['SiteCode', 'MinCovers', 'MaxCovers'])
 
-# Add the assigned table
-reservations = reservations.merge(tables, on="TableCode", how="left")
-
-# Drop what is not needed
-reservations = reservations.drop('SiteCode', axis=1)
-reservations = reservations.drop('MinCovers', axis=1)
-reservations = reservations.drop('MaxCovers', axis=1)
-
-# Change BookingDate from string to datetime
+# Convert to datetime
 reservations['BookingDate'] = pd.to_datetime(reservations['BookingDate'])
 reservations['CreatedOn'] = pd.to_datetime(reservations['CreatedOn'])
+
+# Add the new columns before starting the loop
+for table in tables['TableCode']:
+    reservations[f'is{table}Free'] = False
+    reservations[f'{table}MinCovers'] = 0
+    reservations[f'{table}MaxCovers'] = 0
 
 # Get unique days
 unique_days = reservations["BookingDate"].dt.date.unique()
 
-# Create extra rows
+# Process each day
 for day in unique_days:
+    print(f'Looking at {day} \t --> \t {unique_days.index(day)+1} / {len(unique_days)}')
 
-    print(f'Looking at {day}')
+    reservations_per_day = reservations[reservations['BookingDate'].dt.date == day].sort_values(by='CreatedOn')
+    reservations_per_day['start_slot'] = (reservations_per_day['BookingTime'] - restaurant_opening_time36000) // (60 * 15)
+    reservations_per_day['duration'] = reservations_per_day['Duration'] // (60 * 15)
 
-    reservations_per_day = reservations.loc[reservations['BookingDate'].dt.date == day]
-    reservations_per_day.sort_values(by='CreatedOn')
+    diary = np.full((len(tables), 64), None, dtype=object)
 
-    diary = []
-    for _ in range(len(tables)):
-        diary.append([None] * 64)
-    
     for _, reservation in reservations_per_day.iterrows():
-
         table_index = tables.index[tables['TableCode'] == reservation['TableCode']].tolist()[0]
-        start_slot = convert_to_slot(reservation['BookingTime'] - 36000)
-        duration = convert_to_slot(reservation['Duration'])
+        start_slot, duration = reservation['start_slot'], reservation['duration']
 
         tables_that_fit = tables_can_fit(tables, reservation, diary, start_slot, duration)
 
-        for i, table in enumerate(tables_that_fit):
+        for i, is_free in enumerate(tables_that_fit):
             table_code = str(tables.iloc[i]['TableCode'])
+            reservations.loc[reservations['BookingCode'] == reservation['BookingCode'], f'is{table_code}Free'] = is_free
+            reservations.loc[reservations['BookingCode'] == reservation['BookingCode'], f'{table_code}MinCovers'] = tables.iloc[i]['MinCovers']
+            reservations.loc[reservations['BookingCode'] == reservation['BookingCode'], f'{table_code}MaxCovers'] = tables.iloc[i]['MaxCovers']
 
-            is_free_str = f'is{table_code}Free'
-            reservation[is_free_str] = table
+            
+            reservations_per_day.loc[reservations['BookingCode'] == reservation['BookingCode'], f'is{table_code}Free'] = is_free
+            reservations_per_day.loc[reservations['BookingCode'] == reservation['BookingCode'], f'{table_code}MinCovers'] = tables.iloc[i]['MinCovers']
+            reservations_per_day.loc[reservations['BookingCode'] == reservation['BookingCode'], f'{table_code}MaxCovers'] = tables.iloc[i]['MaxCovers']
 
-            min_covers = f'{table_code}MinCovers'
-            reservation[min_covers] = tables.iloc[i]['MinCovers']
+        diary[table_index, start_slot:start_slot + duration] = reservation['BookingCode']
 
-            max_covers = f'{table_code}MaxCovers'
-            reservation[max_covers] = tables.iloc[i]['MaxCovers']
-
-        for i in range(duration):
-            diary[table_index][start_slot + i] = reservation['BookingCode']
+    # reservations_per_day.to_csv(f'C:/git/UoB.Y4.Dissertation/src/Restaurant-1/output/output-{day}.csv')
 
 
+reservations.to_csv(f'C:/git/UoB.Y4.Dissertation/src/{restaurant_name}/output.csv')

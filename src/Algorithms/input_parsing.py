@@ -76,7 +76,7 @@ def parse_tables(restaurant, file): #'C:/git/UoB.Y4.Dissertation/src/Restaurant-
 
 
 def output_schedule(restaurant, day):
-    with open('C:/git/UoB.Y4.Dissertation/src/outputs/' + day.strftime('%Y-%m-%d') + '.csv', 'w', newline='') as csvfile:
+    with open('C:/git/UoB.Y4.Dissertation/src/outputs/Non-ML/' + day.strftime('%Y-%m-%d') + '.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
 
         output = []

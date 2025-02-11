@@ -1,6 +1,6 @@
 from input_parsing import *
 from Classes.RestaurantState import RestaurantState
-from Algorithms.Reallocation import run
+from Reallocation import run
 
 restaurant = RestaurantState(36000, 64, 15, 6)
 

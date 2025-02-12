@@ -41,7 +41,7 @@ for day in unique_days:
     print(f'Looking at {day} \t --> \t {unique_days.index(day)+1} / {len(unique_days)}')
 
     reservations_per_day = reservations[reservations['BookingDate'].dt.date == day].sort_values(by='CreatedOn')
-    reservations_per_day['start_slot'] = (reservations_per_day['BookingTime'] - restaurant_opening_time36000) // (60 * 15)
+    reservations_per_day['start_slot'] = (reservations_per_day['BookingTime'] - restaurant_opening_time) // (60 * 15)
     reservations_per_day['duration'] = reservations_per_day['Duration'] // (60 * 15)
 
     diary = np.full((len(tables), 64), None, dtype=object)

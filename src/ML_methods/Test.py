@@ -30,11 +30,7 @@ def test_predictor(file_path, reservations, tables, predictor, get_best_table):
             booking_code = str(reservations.loc[reservations.index == reservation.name].iloc[0]['BookingCode'])
             for i in range(int(reservation['Duration'])):
                 diary[best_table_index][int(reservation['BookingTime']) + i] = booking_code
-            # y_pred.append(tables.iloc[best_table_index]['TableCode'])
-
-        # if (rejections > 0):
-        #     print(f'{day=}\t{rejections=}')
-        # print()
+            
         write_schedule(file_path, diary, tables['TableCode'].tolist(), day, len(reservations_for_day), rejections)
 
 

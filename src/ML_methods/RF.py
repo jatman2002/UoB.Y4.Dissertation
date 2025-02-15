@@ -50,8 +50,8 @@ f2 = lambda t: f'{t["TableCode"]}MinCovers'
 f3 = lambda t: f'{t["TableCode"]}MaxCovers'
 
 
-features_to_drop= [f(t) for _,t in tables.iterrows() for f in (f1,f2,f3)]
-reservations = reservations.drop(columns=features_to_drop, axis=1)
+# features_to_drop= [f(t) for _,t in tables.iterrows() for f in (f1,f2,f3)]
+# reservations = reservations.drop(columns=features_to_drop, axis=1)
 
 booking_date = pd.to_datetime(reservations['BookingDate'])
 
@@ -79,6 +79,7 @@ train_data = reservations[booking_date.dt.date.isin(train_days)]
 test_data = reservations[booking_date.dt.date.isin(test_days)]
 
 features = ['GuestCount', 'BookingDateDayOfWeek', 'BookingDateMonth', 'BookingTime', 'Duration', 'EndTime']
+[features.append(f(t)) for _,t in tables.iterrows() for f in (f1,f2,f3)]
 X_train, y_train = train_data[features], train_data["TableCode"]
 
 # fit the RF
@@ -89,6 +90,6 @@ classifier.fit(X_train, y_train)
 
 # test RF on data
 print('TIME TO TEST THIS THING ~~0_0~~\n')
-test_predictor(f'Restaurant-{restaurant_name}/RF', test_data, tables, classifier, find_table)
+test_predictor(f'Restaurant-{restaurant_name}/RF2', test_data, tables, classifier, find_table, features)
 print()
 print('DONE!')

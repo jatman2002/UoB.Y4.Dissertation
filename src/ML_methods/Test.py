@@ -3,12 +3,13 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 import csv
 
-def test_predictor(file_path, reservations, tables, predictor, get_best_table):
+def test_predictor(file_path, reservations, tables, predictor, get_best_table, features=[]):
 
     booking_date_as_dt = pd.to_datetime(reservations['BookingDate']).dt.date
     unique_days = booking_date_as_dt.unique()
 
-    features = ['GuestCount', 'BookingDateDayOfWeek', 'BookingDateMonth', 'BookingTime', 'Duration', 'EndTime']
+    if features == []:
+        features = ['GuestCount', 'BookingDateDayOfWeek', 'BookingDateMonth', 'BookingTime', 'Duration', 'EndTime']
 
     for i, day in enumerate(unique_days):
         print(f'Looking at day {i} / {len(unique_days)}\t{day=}', end='\r')

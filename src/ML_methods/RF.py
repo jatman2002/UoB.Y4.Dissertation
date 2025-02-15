@@ -17,6 +17,10 @@ def find_table(predictor, reservation, diary):
     for t in order_of_tables:
         best_table = tables.iloc[t]
 
+        # ignore where prob is 0 i.e. the classifier will never choose it
+        if probabilities[t] <= 0.:
+            continue
+
         # size constraint
         if best_table['MinCovers'] > reservation['GuestCount'] or best_table['MaxCovers'] < reservation['GuestCount']:
             continue

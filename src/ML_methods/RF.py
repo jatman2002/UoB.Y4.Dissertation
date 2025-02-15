@@ -86,4 +86,5 @@ classifier.fit(X_train, y_train)
 # test RF on data
 print('TIME TO TEST THIS THING ~~0_0~~\n')
 test_predictor(f'Restaurant-{restaurant_name}/RF', test_data, tables, classifier, find_table)
+print()
 print('DONE!')

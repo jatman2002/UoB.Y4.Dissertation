@@ -76,10 +76,11 @@ X_train, y_train = train_data[features], train_data["TableCode"]
 
 # fit the RF
 print('TRAINING THE RANDOM FOREST CLASSIFIER')
-classifier = RandomForestClassifier(n_estimators=100, max_depth=20)
+classifier = RandomForestClassifier(n_estimators=200, max_depth=10)
 classifier.fit(X_train, y_train)
 
 
 # test RF on data
 print('TIME TO TEST THIS THING ~~0_0~~\n')
 test_predictor(test_data, tables, classifier, find_table)
+print('DONE!')

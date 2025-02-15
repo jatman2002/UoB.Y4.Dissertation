@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 import csv
 
-def test_predictor(reservations, tables, predictor, get_best_table):
+def test_predictor(file_path, reservations, tables, predictor, get_best_table):
 
     booking_date_as_dt = pd.to_datetime(reservations['BookingDate']).dt.date
     unique_days = booking_date_as_dt.unique()
@@ -35,11 +35,11 @@ def test_predictor(reservations, tables, predictor, get_best_table):
         # if (rejections > 0):
         #     print(f'{day=}\t{rejections=}')
         # print()
-        write_schedule(diary, tables['TableCode'].tolist(), day, len(reservations_for_day), rejections)
+        write_schedule(file_path, diary, tables['TableCode'].tolist(), day, len(reservations_for_day), rejections)
 
 
-def write_schedule(diary, tables, day, num_reservations, num_rejections):
-    with open('C:/git/UoB.Y4.Dissertation/src/outputs/RF3/' + day.strftime('%Y-%m-%d') + '.csv', 'w', newline='') as csvfile:
+def write_schedule(file_path, diary, tables, day, num_reservations, num_rejections):
+    with open(f'C:/git/UoB.Y4.Dissertation/src/outputs/{file_path}/{day.strftime("%Y-%m-%d")}.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
 
         output = [['reservations: ', num_reservations, 'rejections:', num_rejections, 'wasted slots', get_wasted_slots(diary)],[]]

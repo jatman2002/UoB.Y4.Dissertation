@@ -31,9 +31,12 @@ def find_table(predictor, reservation, diary):
 
 
 # load data from csv (raw data)
+
+restaurant_name = '1'
+
 print('LOADING DATA FROM CSV')
-reservations = pd.read_csv('C:/git/UoB.Y4.Dissertation/src/Restaurant-1/output.csv')
-tables = pd.read_csv('C:/git/UoB.Y4.Dissertation/src/Restaurant-1/tables.csv')
+reservations = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/Restaurant-{restaurant_name}/output.csv')
+tables = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/Restaurant-{restaurant_name}/tables.csv')
 print('DATA LOADED')
 
 # feature 
@@ -82,5 +85,5 @@ classifier.fit(X_train, y_train)
 
 # test RF on data
 print('TIME TO TEST THIS THING ~~0_0~~\n')
-test_predictor(test_data, tables, classifier, find_table)
+test_predictor(f'Restaurant-{restaurant_name}/RF', test_data, tables, classifier, find_table)
 print('DONE!')

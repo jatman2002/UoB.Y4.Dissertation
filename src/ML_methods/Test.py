@@ -11,7 +11,7 @@ def test_predictor(reservations, tables, predictor, get_best_table):
     features = ['GuestCount', 'BookingDateDayOfWeek', 'BookingDateMonth', 'BookingTime', 'Duration', 'EndTime']
 
     for i, day in enumerate(unique_days):
-        print(f'Looking at day {i} / {len(unique_days)}\t{day=}')
+        print(f'Looking at day {i} / {len(unique_days)}\t{day=}', end='\r')
         reservations_for_day = reservations.loc[booking_date_as_dt == day]
         rejections = 0
 
@@ -32,9 +32,9 @@ def test_predictor(reservations, tables, predictor, get_best_table):
                 diary[best_table_index][int(reservation['BookingTime']) + i] = booking_code
             # y_pred.append(tables.iloc[best_table_index]['TableCode'])
 
-        if (rejections > 0):
-            print(f'{day=}\t{rejections=}')
-        print()
+        # if (rejections > 0):
+        #     print(f'{day=}\t{rejections=}')
+        # print()
         write_schedule(diary, tables['TableCode'].tolist(), day, len(reservations_for_day), rejections)
 
 
@@ -42,7 +42,7 @@ def write_schedule(diary, tables, day, num_reservations, num_rejections):
     with open('C:/git/UoB.Y4.Dissertation/src/outputs/RF3/' + day.strftime('%Y-%m-%d') + '.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
 
-        output = [['reservations: ', num_reservations, 'rejections:', num_rejections],[]]
+        output = [['reservations: ', num_reservations, 'rejections:', num_rejections, 'wasted slots', get_wasted_slots(diary)],[]]
         for table_code, table in zip(tables, diary):
             table_output = []
             table_output.append(table_code)
@@ -54,3 +54,17 @@ def write_schedule(diary, tables, day, num_reservations, num_rejections):
             output.append(table_output)
 
         writer.writerows(output)
+
+def get_wasted_slots(diary):
+    min_booking_length = 6
+    total_wasted_slots = 0
+    for table in diary:
+        wasted_slots = 0
+        for slot in table:
+            if slot == None:
+                wasted_slots += 1
+            else:
+                total_wasted_slots += wasted_slots % min_booking_length
+                wasted_slots = 0
+
+    return total_wasted_slots

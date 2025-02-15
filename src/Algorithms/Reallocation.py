@@ -4,14 +4,16 @@ from Classes.ReservationRequest import *
 from Classes.Table import *
 
 def run(restaurant_state):
+    rejected = 0
     for request in restaurant_state.reservation_requests:
         allocated_reservations = get_allocated_reservations(restaurant_state)
         sort_list(allocated_reservations)
         restaurant_state = reallocate(restaurant_state, allocated_reservations)
 
-        find_best_table(request, restaurant_state)
+        if not find_best_table(request, restaurant_state):
+            rejected += 0
 
-    return restaurant_state
+    return restaurant_state, rejected
 
 
 def get_allocated_reservations(restaurant_state):

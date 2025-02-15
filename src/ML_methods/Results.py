@@ -7,6 +7,7 @@ method_name = 'RF'
 file_path = f'C:/git/UoB.Y4.Dissertation/src/outputs/Restaurant-{restaurant_name}/{method_name}/'
 
 all_result_files = os.listdir(file_path)
+all_result_files.remove('results.csv')
 
 results = []
 

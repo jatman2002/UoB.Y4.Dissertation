@@ -52,6 +52,8 @@ def parse_reservations(restaurant, file): #'C:/git/UoB.Y4.Dissertation/src/Resta
 
             day_requests.append(request)
 
+        requests.append(day_requests)
+
     return requests
 
 def parse_tables(restaurant, file): #'C:/git/UoB.Y4.Dissertation/src/Restaurant-1/tables.csv'
@@ -75,11 +77,11 @@ def parse_tables(restaurant, file): #'C:/git/UoB.Y4.Dissertation/src/Restaurant-
 
 
 
-def output_schedule(restaurant, day):
-    with open('C:/git/UoB.Y4.Dissertation/src/outputs/Non-ML/' + day.strftime('%Y-%m-%d') + '.csv', 'w', newline='') as csvfile:
+def output_schedule(restaurant, day, rejected):
+    with open('C:/git/UoB.Y4.Dissertation/src/outputs/Restaurant-1/Non-ML/' + day.strftime('%Y-%m-%d') + '.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
 
-        output = []
+        output = [['reservations: ', len(restaurant.reservation_requests), 'rejections:', rejected, 'wasted slots', get_wasted_slots(restaurant.tables)],[]]
         for table in restaurant.tables:
             table_output = []
             table_output.append(table.table_code)
@@ -91,3 +93,18 @@ def output_schedule(restaurant, day):
             output.append(table_output)
 
         writer.writerows(output)
+
+
+def get_wasted_slots(tables):
+    min_booking_length = 6
+    total_wasted_slots = 0
+    for table in tables:
+        wasted_slots = 0
+        for slot in table.reservations:
+            if slot == None:
+                wasted_slots += 1
+            else:
+                total_wasted_slots += wasted_slots % min_booking_length
+                wasted_slots = 0
+
+    return total_wasted_slots

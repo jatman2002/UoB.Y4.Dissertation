@@ -94,11 +94,21 @@ print('TRAINING THE MLP CLASSIFIER')
 # classifier = RandomForestClassifier(n_estimators=200, max_depth=10)
 # classifier.fit(X_train, y_train)
 
+inp = len(features)
+hidden_1 = 6 + (np.abs(len(tables) - 6)//4)
+hidden_2 = 6 + ((np.abs(len(tables) - 6)*2)//4)
+hidden_3 = 6 + ((np.abs(len(tables) - 6)*3)//4)
+output = len(tables)
+
 # Create MLP
 model = nn.Sequential(
-    nn.Linear(6, (len(tables) - 6)//2),
+    nn.Linear(inp, hidden_1),
     nn.ReLU(),
-    nn.Linear((len(tables) - 6)//2, len(tables)),
+    nn.Linear(hidden_1, hidden_2),
+    nn.ReLU(),
+    nn.Linear(hidden_2, hidden_3),
+    nn.ReLU(),
+    nn.Linear(hidden_3, output),
     nn.Softmax(dim=0)
 )
 
@@ -106,7 +116,7 @@ loss_fn = nn.CrossEntropyLoss()
 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-num_epochs = 100
+num_epochs = 250
 
 for n in range(num_epochs):
     y_pred = model(X_train)

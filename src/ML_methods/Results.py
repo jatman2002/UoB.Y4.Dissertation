@@ -3,11 +3,11 @@ import pandas as pd
 import csv
 
 restaurant_name = '1'
-method_name = 'OVR2'
+method_name = 'MLP'
 file_path = f'C:/git/UoB.Y4.Dissertation/src/outputs/Restaurant-{restaurant_name}/{method_name}/'
 
 all_result_files = os.listdir(file_path)
-# all_result_files.remove('results.csv')
+all_result_files.remove('results.csv')
 
 results = []
 
@@ -26,5 +26,10 @@ for file in all_result_files:
 df = pd.DataFrame(results, columns=['Date', 'ReservationCount', 'Rejections', 'WastedSlots'])
 
 df.to_csv(file_path+'results.csv')
+
+wasted_count = df['WastedSlots'].sum()
+rejections = df['Rejections'].sum()
+
+print(f'{wasted_count=}\n{rejections=}')
 
         

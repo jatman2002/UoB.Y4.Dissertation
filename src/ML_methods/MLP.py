@@ -89,6 +89,13 @@ features = ['GuestCount', 'BookingDateDayOfWeek', 'BookingDateMonth', 'BookingTi
 # [features.append(f(t)) for _,t in tables.iterrows() for f in (f1,f2,f3)]
 X_train, y_train = torch.tensor(train_data[features].values, dtype=torch.float32), torch.tensor(train_data["TableCode"].values, dtype=torch.long)
 
+
+
+#----------------------
+# X_train, y_train, test_data, features, restaurant_name, tables
+#----------------------
+
+
 # # fit the RF
 print('TRAINING THE MLP CLASSIFIER')
 # classifier = RandomForestClassifier(n_estimators=200, max_depth=10)

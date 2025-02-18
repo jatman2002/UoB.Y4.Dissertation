@@ -27,4 +27,9 @@ df = pd.DataFrame(results, columns=['Date', 'ReservationCount', 'Rejections', 'W
 
 df.to_csv(file_path+'results.csv')
 
+wasted_count = df['WastedSlots'].sum()
+rejections = df['Rejections'].sum()
+
+print(f'{wasted_count=}\n{rejections=}')
+
         

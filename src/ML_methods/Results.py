@@ -3,7 +3,7 @@ import pandas as pd
 import csv
 
 restaurant_name = '1'
-method_name = 'MLP'
+method_name = 'RF'
 file_path = f'C:/git/UoB.Y4.Dissertation/src/outputs/Restaurant-{restaurant_name}/{method_name}/'
 
 all_result_files = os.listdir(file_path)

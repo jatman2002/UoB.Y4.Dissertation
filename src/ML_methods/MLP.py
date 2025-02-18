@@ -7,6 +7,7 @@ import torch.nn as nn
 from sklearn.preprocessing import LabelEncoder
 
 from Test import test_predictor
+from dataset import get_data
 
 
 def find_table(predictor, reservation, diary):
@@ -42,57 +43,11 @@ def find_table(predictor, reservation, diary):
 
 restaurant_name = '1'
 
-print('LOADING DATA FROM CSV')
-reservations = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/Restaurant-{restaurant_name}/output.csv')
-tables = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/Restaurant-{restaurant_name}/tables.csv')
-print('DATA LOADED')
-
-# feature 
-print('MESSING AROUND WITH FEATURES')
-# f1 = lambda t: f'is{t["TableCode"]}Free'
-# f2 = lambda t: f'{t["TableCode"]}MinCovers'
-# f3 = lambda t: f'{t["TableCode"]}MaxCovers'
-
-
-# features_to_drop= [f(t) for _,t in tables.iterrows() for f in (f1,f2,f3)]
-# reservations = reservations.drop(columns=features_to_drop, axis=1)
-
-booking_date = pd.to_datetime(reservations['BookingDate'])
-
-reservations['BookingDateDayOfWeek'] = booking_date.dt.dayofweek
-reservations['BookingDateDay'] = booking_date.dt.day
-reservations['BookingDateMonth'] = booking_date.dt.month
-
-reservations['BookingTime'] = (reservations['BookingTime'] - 36000) / (60*15)
-reservations['Duration'] = reservations['Duration'] / (60*15)
-reservations["EndTime"] = reservations["BookingTime"] + reservations["Duration"]
-
-label_encoder = LabelEncoder()
-reservations['TableCode'] = label_encoder.fit_transform(reservations['TableCode'])
-
-
-# Train/Test split
-print('SPLITTING DATA INTO TRAIN AND TEST')
-# Get unique days and shuffle them
-unique_days = booking_date.dt.date.unique()
-# np.random.shuffle(unique_days)
-
-# Split 70% for training, 30% for testing
-split_idx = int(len(unique_days) * 0.7)
-train_days, test_days = unique_days[:split_idx], unique_days[split_idx:]
-
-# Create train and test sets based on BookingDate
-train_data = reservations[booking_date.dt.date.isin(train_days)]
-test_data = reservations[booking_date.dt.date.isin(test_days)]
-
-features = ['GuestCount', 'BookingDateDayOfWeek', 'BookingDateMonth', 'BookingTime', 'Duration', 'EndTime']
-# [features.append(f(t)) for _,t in tables.iterrows() for f in (f1,f2,f3)]
-X_train, y_train = torch.tensor(train_data[features].values, dtype=torch.float32), torch.tensor(train_data["TableCode"].values, dtype=torch.long)
-
-
-
 #----------------------
-# X_train, y_train, test_data, features, restaurant_name, tables
+X_train, y_train, test_data, features, restaurant_name, tables = get_data(restaurant_name, use_label_encoder=True)
+
+X_train, y_train = torch.tensor(X_train.values, dtype=torch.float32), torch.tensor(y_train.values, dtype=torch.long)
+
 #----------------------
 
 

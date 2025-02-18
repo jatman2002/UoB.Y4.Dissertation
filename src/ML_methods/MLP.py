@@ -10,7 +10,7 @@ from Test import test_predictor
 from dataset import get_data
 
 
-def find_table(predictor, reservation, diary):
+def find_table(predictor, reservation, diary, tables):
 
     # probabilities = classifier.predict_proba(pd.DataFrame([reservation]))[0]
     probabilities = predictor(torch.tensor(reservation.astype(float).values, dtype=torch.float32)).detach().numpy()
@@ -39,57 +39,59 @@ def find_table(predictor, reservation, diary):
     return best_table_index
 
 
-#------------------------------------------------------------------------------------------------------------------------------------
+def run(restaurant_name):
 
-# LOAD DATA
+    #------------------------------------------------------------------------------------------------------------------------------------
 
-restaurant_name = '1'
-X_train, y_train, test_data, features, restaurant_name, tables = get_data(restaurant_name, use_label_encoder=True)
+    # LOAD DATA
 
-X_train, y_train = torch.tensor(X_train.values, dtype=torch.float32), torch.tensor(y_train.values, dtype=torch.long)
+    
+    X_train, y_train, test_data, features, restaurant_name, tables = get_data(restaurant_name, use_label_encoder=True)
 
-#------------------------------------------------------------------------------------------------------------------------------------
+    X_train, y_train = torch.tensor(X_train.values, dtype=torch.float32), torch.tensor(y_train.values, dtype=torch.long)
 
-# TRAIN MODEL
+    #------------------------------------------------------------------------------------------------------------------------------------
 
-print('TRAINING THE MLP CLASSIFIER')
+    # TRAIN MODEL
 
-inp = len(features)
-hidden_1 = 6 + (np.abs(len(tables) - 6)//4)
-hidden_2 = 6 + ((np.abs(len(tables) - 6)*2)//4)
-hidden_3 = 6 + ((np.abs(len(tables) - 6)*3)//4)
-output = len(tables)
+    print('TRAINING THE MLP CLASSIFIER')
 
-# Create MLP
-model = nn.Sequential(
-    nn.Linear(inp, hidden_1),
-    nn.ReLU(),
-    nn.Linear(hidden_1, hidden_2),
-    nn.ReLU(),
-    nn.Linear(hidden_2, hidden_3),
-    nn.ReLU(),
-    nn.Linear(hidden_3, output),
-    nn.Softmax(dim=0)
-)
+    inp = len(features)
+    hidden_1 = 6 + (np.abs(len(tables) - 6)//4)
+    hidden_2 = 6 + ((np.abs(len(tables) - 6)*2)//4)
+    hidden_3 = 6 + ((np.abs(len(tables) - 6)*3)//4)
+    output = len(tables)
 
-loss_fn = nn.CrossEntropyLoss()
+    # Create MLP
+    model = nn.Sequential(
+        nn.Linear(inp, hidden_1),
+        nn.ReLU(),
+        nn.Linear(hidden_1, hidden_2),
+        nn.ReLU(),
+        nn.Linear(hidden_2, hidden_3),
+        nn.ReLU(),
+        nn.Linear(hidden_3, output),
+        nn.Softmax(dim=0)
+    )
 
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    loss_fn = nn.CrossEntropyLoss()
 
-num_epochs = 250
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-for n in range(num_epochs):
-    y_pred = model(X_train)
-    loss = loss_fn(y_pred, y_train)
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
+    num_epochs = 250
 
-#------------------------------------------------------------------------------------------------------------------------------------
+    for n in range(num_epochs):
+        y_pred = model(X_train)
+        loss = loss_fn(y_pred, y_train)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
-# TEST MODEL
+    #------------------------------------------------------------------------------------------------------------------------------------
 
-print('TIME TO TEST THIS THING ~~0_0~~\n')
-test_predictor(f'Restaurant-{restaurant_name}/MLP', test_data, tables, model, find_table, features)
-print()
-print('DONE!')
+    # TEST MODEL
+
+    print('TIME TO TEST THIS THING ~~0_0~~\n')
+    test_predictor(f'Restaurant-{restaurant_name}/MLP', test_data, tables, model, find_table, features)
+    print()
+    print('DONE!')

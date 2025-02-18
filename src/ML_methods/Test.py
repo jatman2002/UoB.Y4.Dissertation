@@ -23,7 +23,7 @@ def test_predictor(file_path, reservations, tables, predictor, get_best_table, f
         for i in range(len(reservations_for_day)):
             reservation = reservations_for_day.iloc[i]
             
-            best_table_index = get_best_table(predictor, reservation[features], diary)
+            best_table_index = get_best_table(predictor, reservation[features], diary, tables)
             if best_table_index == -1:
                 rejections += 1
                 continue

@@ -7,9 +7,9 @@ from Test import test_predictor
 from dataset import get_data
 
 
-def find_table(predictor, reservation, diary):
+def find_table(predictor, reservation, diary, tables):
 
-    probabilities = classifier.predict_proba(pd.DataFrame([reservation]))[0]
+    probabilities = predictor.predict_proba(pd.DataFrame([reservation]))[0]
     order_of_tables = np.argsort(probabilities)[::-1]
 
     best_table_index = -1
@@ -35,20 +35,22 @@ def find_table(predictor, reservation, diary):
     return best_table_index
 
 
-# load data from csv (raw data)
+def run(restaurant_name):
 
-restaurant_name = '1'
+    # load data from csv (raw data)
 
-X_train, y_train, test_data, features, restaurant_name, tables = get_data(restaurant_name, use_label_encoder=False)
+    
 
-# fit the RF
-print('TRAINING THE LOGISTIC REGRESSION CLASSIFIER')
-classifier = LogisticRegression()
-classifier.fit(X_train, y_train)
+    X_train, y_train, test_data, features, restaurant_name, tables = get_data(restaurant_name, use_label_encoder=False)
+
+    # fit the RF
+    print('TRAINING THE LOGISTIC REGRESSION CLASSIFIER')
+    classifier = LogisticRegression()
+    classifier.fit(X_train, y_train)
 
 
-# test RF on data
-print('TIME TO TEST THIS THING ~~0_0~~\n')
-test_predictor(f'Restaurant-{restaurant_name}/LR2', test_data, tables, classifier, find_table, features)
-print()
-print('DONE!')
+    # test RF on data
+    print('TIME TO TEST THIS THING ~~0_0~~\n')
+    test_predictor(f'Restaurant-{restaurant_name}/LR2', test_data, tables, classifier, find_table, features)
+    print()
+    print('DONE!')

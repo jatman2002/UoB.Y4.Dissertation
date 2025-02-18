@@ -31,6 +31,6 @@ def run(restaurant_name, method_name):
     wasted_count = df['WastedSlots'].sum()
     rejections = df['Rejections'].sum()
 
-    print(f'{method_name=}\t{wasted_count=}\n{rejections=}')
+    print(f'{method_name=}\t{wasted_count=}\t{rejections=}')
 
         

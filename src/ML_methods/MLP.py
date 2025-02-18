@@ -39,22 +39,20 @@ def find_table(predictor, reservation, diary):
     return best_table_index
 
 
-# load data from csv (raw data)
+#------------------------------------------------------------------------------------------------------------------------------------
+
+# LOAD DATA
 
 restaurant_name = '1'
-
-#----------------------
 X_train, y_train, test_data, features, restaurant_name, tables = get_data(restaurant_name, use_label_encoder=True)
 
 X_train, y_train = torch.tensor(X_train.values, dtype=torch.float32), torch.tensor(y_train.values, dtype=torch.long)
 
-#----------------------
+#------------------------------------------------------------------------------------------------------------------------------------
 
+# TRAIN MODEL
 
-# # fit the RF
 print('TRAINING THE MLP CLASSIFIER')
-# classifier = RandomForestClassifier(n_estimators=200, max_depth=10)
-# classifier.fit(X_train, y_train)
 
 inp = len(features)
 hidden_1 = 6 + (np.abs(len(tables) - 6)//4)
@@ -87,10 +85,10 @@ for n in range(num_epochs):
     loss.backward()
     optimizer.step()
 
-# pred = model(torch.tensor(test_data.iloc[0][features].astype(float).values, dtype=torch.float32))
+#------------------------------------------------------------------------------------------------------------------------------------
 
-# print(pred)
-# test RF on data
+# TEST MODEL
+
 print('TIME TO TEST THIS THING ~~0_0~~\n')
 test_predictor(f'Restaurant-{restaurant_name}/MLP', test_data, tables, model, find_table, features)
 print()

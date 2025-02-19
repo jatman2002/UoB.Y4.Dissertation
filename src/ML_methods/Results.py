@@ -34,3 +34,4 @@ def run(restaurant_name, method_name):
     print(f'{method_name=}\t{wasted_count=}\t{rejections=}')
 
         
+# run('1', 'MLP')

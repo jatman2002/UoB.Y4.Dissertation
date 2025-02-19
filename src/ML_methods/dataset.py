@@ -51,6 +51,6 @@ def get_data(restaurant_name, use_label_encoder=False):
 
     features = ['GuestCount', 'BookingDateDayOfWeek', 'BookingDateMonth', 'BookingTime', 'Duration', 'EndTime']
     # [features.append(f(t)) for _,t in tables.iterrows() for f in (f1,f2,f3)]
-    X_train, y_train = train_data[features], train_data["TableCode"]
+    # X_train, y_train = train_data[features], train_data["TableCode"]
     
-    return X_train, y_train, test_data, features, restaurant_name, tables
+    return train_data, test_data, features, restaurant_name, tables

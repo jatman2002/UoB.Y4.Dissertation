@@ -40,7 +40,9 @@ def run(restaurant_name):
 
     # load data from csv (raw data)
 
-    X_train, y_train, test_data, features, restaurant_name, tables = get_data(restaurant_name, use_label_encoder=False)
+    train_data, test_data, features, restaurant_name, tables = get_data(restaurant_name, use_label_encoder=False)
+    X_train = train_data[features]
+    y_train = train_data['TableCode']
 
     # fit the RF
     print('TRAINING THE OVR LOGISTIC REGRESSION CLASSIFIER')

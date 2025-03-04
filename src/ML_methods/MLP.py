@@ -13,20 +13,22 @@ from Test import test_predictor
 from dataset import get_data
 
 class CustomLoss(nn.CrossEntropyLoss):
-    def __init__(self, weight: Optional[Tensor] = None, size_average=None, ignore_index: int = -100,
+    def __init__(self, alpha, weight: Optional[Tensor] = None, size_average=None, ignore_index: int = -100,
                  reduce=None, reduction: str = 'mean', label_smoothing: float = 0.0):
-        super().__init__()
+        super().__init__(weight, size_average, ignore_index, reduce, reduction, label_smoothing)
+
+        self.alpha = alpha
 
     def forward(self, inp: Tensor, target: Tensor, score):
         CEL = super().forward(inp, target)
 
-        return CEL + score*score
+        return (1-self.alpha)*CEL + self.alpha * score/inp.size(0)
 
 
 def find_table(predictor, reservation, diary, tables):
 
     # probabilities = classifier.predict_proba(pd.DataFrame([reservation]))[0]
-    probabilities = predictor(torch.tensor(reservation.astype(float).values, dtype=torch.float32)).detach().numpy()
+    probabilities = predictor(torch.tensor(reservation.astype(float).values.reshape(1,-1), dtype=torch.float32)).detach().numpy()[0]
     order_of_tables = np.argsort(probabilities)[::-1]
 
     best_table_index = -1
@@ -52,21 +54,21 @@ def find_table(predictor, reservation, diary, tables):
     return best_table_index
 
 
-def get_wasted_slots(diary):
+def get_wasted_slots(table):
     min_booking_length = 6
     total_wasted_slots = 0
-    for table in diary:
-        wasted_slots = 0
-        for slot in table:
-            if slot == None:
-                wasted_slots += 1
-            else:
-                total_wasted_slots += wasted_slots % min_booking_length
-                wasted_slots = 0
+    
+    wasted_slots = 0
+    for slot in table:
+        if slot == None:
+            wasted_slots += 1
+        else:
+            total_wasted_slots += wasted_slots % min_booking_length
+            wasted_slots = 0
 
     return total_wasted_slots
 
-def run(restaurant_name):
+def run(restaurant_name, alpha):
 
     #------------------------------------------------------------------------------------------------------------------------------------
 
@@ -82,8 +84,6 @@ def run(restaurant_name):
     end_time_idx = features.index('EndTime')
     guest_count_idx = features.index('GuestCount')
 
-    # X_train_torch, y_train_torch = torch.tensor(X_train.values, dtype=torch.float32), torch.tensor(y_train.values, dtype=torch.long)
-
     #------------------------------------------------------------------------------------------------------------------------------------
 
     # TRAIN MODEL
@@ -96,32 +96,22 @@ def run(restaurant_name):
     # hidden_3 = 6 + ((np.abs(len(tables) - 6)*3)//4)
     output = len(tables)
 
-    # Create MLP
-    # model = nn.Sequential(
-    #     nn.Linear(inp, hidden_1),
-    #     nn.ReLU(),
-    #     nn.Linear(hidden_1, hidden_2),
-    #     nn.ReLU(),
-    #     nn.Linear(hidden_2, hidden_3),
-    #     nn.ReLU(),
-    #     nn.Linear(hidden_3, output),
-    #     nn.Softmax(dim=0)
-    # )
-
     model = nn.Sequential(
         nn.Linear(inp, hidden_1),
         nn.ReLU(),
         nn.Linear(hidden_1, output),
-        nn.Softmax(dim=0)
+        nn.Softmax(dim=1)
     )
 
-    loss_fn = CustomLoss()
+    loss_fn = CustomLoss(alpha)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-    num_epochs = 400
+    num_epochs = 100
 
     unique_days = pd.to_datetime(train_data['BookingDate']).dt.date.unique()
+
+    loss_li = []
 
     for n in range(num_epochs):
 
@@ -145,10 +135,6 @@ def run(restaurant_name):
             # for booking, target, pred in zip(X_train_day.tolist(), y_train_day.tolist(), y_pred.tolist()):
             for booking, pred in zip(X_train_day.tolist(), y_pred.tolist()):
 
-                # for i in range(int(booking[duration_idx])):
-                #     target_diary[target][int(booking[start_time_idx]) + i] = 1 # occupied
-
-
                 order_of_tables = np.argsort(pred)[::-1]
                 for t in order_of_tables:
                     table = tables.iloc[t]
@@ -163,31 +149,39 @@ def run(restaurant_name):
 
                     for i in range(int(booking[duration_idx])):
                         model_diary[t][int(booking[start_time_idx]) + i] = 1 # occupied
+
+                    total_score += get_wasted_slots(model_diary[t])# * (1/pred[t])
                     break
 
             # target_wasted_slots = get_wasted_slots(target_diary)
-            model_wasted_slots = get_wasted_slots(model_diary)
+            # model_wasted_slots = get_wasted_slots(model_diary)
 
-            total_score += model_wasted_slots #- target_wasted_slots
+            # total_score += model_wasted_slots #- target_wasted_slots
 
-            print(f'epoch_num = {n}\tday = {day}')#\t{target_wasted_slots=}\t{model_wasted_slots=}')
+            wasted_per_day = total_score / len(unique_days)
+
+            print(f'Alpha {alpha}\t Epoch {n+1}\t Day {unique_days.tolist().index(day)+1} / {len(unique_days)}\t Wasted Slots: {wasted_per_day}')
 
 
         #====================================================================================================================================
 
-        loss = loss_fn(y_pred, y_train_day, total_score)
+        loss = loss_fn(y_pred, y_train_day, wasted_per_day)
+        loss_li.append(loss.item())
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
     #------------------------------------------------------------------------------------------------------------------------------------
 
+    return loss_li
+
+
     # TEST MODEL
 
-    print('TIME TO TEST THIS THING ~~0_0~~\n')
-    test_predictor(f'Restaurant-{restaurant_name}/MLP', test_data, tables, model, find_table, features)
-    print()
-    print('DONE!')
+    # print('TIME TO TEST THIS THING ~~0_0~~\n')
+    # test_predictor(f'Restaurant-{restaurant_name}/MLP', test_data, tables, model, find_table, features)
+    # print()
+    # print('DONE!')
 
 
 # run('1')

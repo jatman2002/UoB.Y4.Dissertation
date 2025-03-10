@@ -46,7 +46,7 @@ def run(restaurant_name):
     # LOAD DATA
 
     
-    X_train, y_train, test_data, features, restaurant_name, tables = get_data(restaurant_name, use_label_encoder=True)
+    X_train, y_train, test_data, features, tables = get_data(restaurant_name, use_label_encoder=True)
 
     X_train, y_train = torch.tensor(X_train.values, dtype=torch.float32), torch.tensor(y_train.values, dtype=torch.long)
 

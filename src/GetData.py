@@ -52,7 +52,8 @@ def get_bookings(connection, site_code):
     query += f'ON b.BookingCode = bt.BookingCode '
     query += f'LEFT JOIN Tables t '
     query += f'ON bt.TableCode = t.TableCode '
-    query += f'WHERE b.SiteCode={site_code}'
+    query += f'WHERE b.SiteCode={site_code} '
+    query += f'ORDER BY BookingDate'
 
     df = pd.read_sql_query(query, connection)
     return df
@@ -66,11 +67,12 @@ if __name__ == '__main__':
 
 
     site_codes = get_all_site_codes(connection)
+    print(site_codes)
 
     for i in range(len(site_codes)):
         site_code = site_codes[i]
 
-        file_path = f'C:/git/UOB.Y4.Dissertation/src/SQL-DATA/Restaurant-{i+1}/'
+        file_path = f'C:/git/UOB.Y4.Dissertation/src/SQL-DATA/Restaurant-{i+1}-'
 
         #----------------------------------------------------------------------------------#
         table_df = get_tables_for_a_site(connection, site_code)

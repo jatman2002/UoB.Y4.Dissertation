@@ -2,23 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 
-
-def get_data(restaurant_name, use_label_encoder=False):
-
-    print('LOADING DATA FROM CSV')
-    reservations = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/Restaurant-{restaurant_name}/reservations.csv')
-    existing = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/Restaurant-{restaurant_name}/existing.csv')
-    tables = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/Restaurant-{restaurant_name}/tables.csv')
-
-
-    reservations = reservations.merge(existing, on='BookingCode', suffixes=("_left", "_right")).drop(columns=['GuestCount_right', 'BookingDate_right', 'BookingTime_right', 'Duration_right'])
-    reservations.columns = reservations.columns.str.replace("_left", "", regex=False)
-    reservations = reservations.merge(tables, on="TableCode", how="left").drop(columns=['SiteCode', 'MinCovers', 'MaxCovers'])
-
-    print('DATA LOADED')
-
-    # feature 
-    print('MESSING AROUND WITH FEATURES')
+def feature_engineering(reservations, use_label_encoder):
 
     booking_date = pd.to_datetime(reservations['BookingDate'])
 
@@ -35,22 +19,23 @@ def get_data(restaurant_name, use_label_encoder=False):
         reservations['TableCode'] = label_encoder.fit_transform(reservations['TableCode'])
 
 
-    # Train/Test split
-    print('SPLITTING DATA INTO TRAIN AND TEST')
-    # Get unique days and shuffle them
-    unique_days = booking_date.dt.date.unique()
-    # np.random.shuffle(unique_days)
 
-    # Split 70% for training, 30% for testing
-    split_idx = int(len(unique_days) * 0.7)
-    train_days, test_days = unique_days[:split_idx], unique_days[split_idx:]
+def get_data(restaurant_name, use_label_encoder=False):
 
-    # Create train and test sets based on BookingDate
-    train_data = reservations[booking_date.dt.date.isin(train_days)]
-    test_data = reservations[booking_date.dt.date.isin(test_days)]
+    print('LOADING DATA FROM CSV')
+    train_reservations = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/SQL-DATA/Restaurant-{i}-train.csv')
+    test_reservations = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/Restaurant-{i}-test.csv')
+    tables = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/SQL-DATA/Restaurant-{restaurant_name}-tables.csv')
+
+    print('DATA LOADED')
+
+    # feature 
+    print('MESSING AROUND WITH FEATURES')
+
+    feature_engineering(train_reservations, use_label_encoder)
+    feature_engineering(test_reservations, use_label_encoder)
 
     features = ['GuestCount', 'BookingDateDayOfWeek', 'BookingDateMonth', 'BookingTime', 'Duration', 'EndTime']
-    # [features.append(f(t)) for _,t in tables.iterrows() for f in (f1,f2,f3)]
     X_train, y_train = train_data[features], train_data["TableCode"]
     
-    return X_train, y_train, test_data, features, restaurant_name, tables
+    return X_train, y_train, test_reservations, features, tables

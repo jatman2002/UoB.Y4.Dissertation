@@ -23,8 +23,8 @@ def feature_engineering(reservations, use_label_encoder):
 def get_data(restaurant_name, use_label_encoder=False):
 
     print('LOADING DATA FROM CSV')
-    train_reservations = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/SQL-DATA/Restaurant-{i}-train.csv')
-    test_reservations = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/Restaurant-{i}-test.csv')
+    train_reservations = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/SQL-DATA/Restaurant-{restaurant_name}-train.csv')
+    test_reservations = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/SQL-DATA/Restaurant-{restaurant_name}-test.csv')
     tables = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/SQL-DATA/Restaurant-{restaurant_name}-tables.csv')
 
     print('DATA LOADED')

@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import csv
+from pathlib import Path
 
 def run(restaurant_name, method_name):
 
@@ -26,7 +27,10 @@ def run(restaurant_name, method_name):
 
     df = pd.DataFrame(results, columns=['Date', 'ReservationCount', 'Rejections', 'WastedSlots'])
 
-    df.to_csv(file_path+'results.csv')
+
+    Path(f'C:/git/UoB.Y4.Dissertation/src/results/Restaurant-{restaurant_name}/').mkdir(parents=True, exist_ok=True)
+
+    df.to_csv(f'C:/git/UoB.Y4.Dissertation/src/results/Restaurant-{restaurant_name}/{method_name}.csv')
 
     wasted_count = df['WastedSlots'].sum()
     rejections = df['Rejections'].sum()

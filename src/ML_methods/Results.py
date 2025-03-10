@@ -30,7 +30,7 @@ def run(restaurant_name, method_name):
 
     Path(f'C:/git/UoB.Y4.Dissertation/src/results/Restaurant-{restaurant_name}/').mkdir(parents=True, exist_ok=True)
 
-    df.to_csv(f'C:/git/UoB.Y4.Dissertation/src/results/Restaurant-{restaurant_name}/{method_name}.csv')
+    df.to_csv(f'C:/git/UoB.Y4.Dissertation/src/results/Restaurant-{restaurant_name}/{restaurant_name}-{method_name}.csv')
 
     wasted_count = df['WastedSlots'].sum()
     rejections = df['Rejections'].sum()

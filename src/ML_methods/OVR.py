@@ -28,7 +28,7 @@ def find_table(predictor, reservation, diary, tables):
             continue
 
         # 2. time constraint
-        if np.all(diary[t][int(reservation['BookingTime']):int(reservation['EndTime'])] != [None]*int(reservation['Duration'])):
+        if np.all(diary[t][int(reservation['BookingStartTime']):int(reservation['EndTime'])] != [None]*int(reservation['Duration'])):
             continue
 
         return t
@@ -50,6 +50,6 @@ def run(restaurant_name):
 
     # test RF on data
     print('TIME TO TEST THIS THING ~~(0_0)~~\n')
-    test_predictor(f'Restaurant-{restaurant_name}/OVR2', test_data, tables, classifier, find_table, features)
+    test_predictor(f'Restaurant-{restaurant_name}/OVR', test_data, tables, classifier, find_table, features)
     print()
     print('DONE!')

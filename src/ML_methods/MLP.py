@@ -31,7 +31,7 @@ def find_table(predictor, reservation, diary, tables):
             continue
 
         # 2. time constraint
-        if np.all(diary[t][int(reservation['BookingTime']):int(reservation['EndTime'])] != [None]*int(reservation['Duration'])):
+        if np.all(diary[t][int(reservation['BookingStartTime']):int(reservation['EndTime'])] != [None]*int(reservation['Duration'])):
             continue
 
         return t

@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 import csv
+from pathlib import Path
 
 def test_predictor(file_path, reservations, tables, predictor, get_best_table, features=[]):
 
@@ -9,7 +10,7 @@ def test_predictor(file_path, reservations, tables, predictor, get_best_table, f
     unique_days = booking_date_as_dt.unique()
 
     if features == []:
-        features = ['GuestCount', 'BookingDateDayOfWeek', 'BookingDateMonth', 'BookingTime', 'Duration', 'EndTime']
+        features = ['GuestCount', 'BookingDateDayOfWeek', 'BookingDateMonth', 'BookingStartTime', 'Duration', 'EndTime']
 
     for i, day in enumerate(unique_days):
         print(f'Looking at day {i} / {len(unique_days)}\t{day=}', end='\r')
@@ -30,12 +31,13 @@ def test_predictor(file_path, reservations, tables, predictor, get_best_table, f
 
             booking_code = str(reservations.loc[reservations.index == reservation.name].iloc[0]['BookingCode'])
             for i in range(int(reservation['Duration'])):
-                diary[best_table_index][int(reservation['BookingTime']) + i] = booking_code
+                diary[best_table_index][int(reservation['BookingStartTime']) + i] = booking_code
             
         write_schedule(file_path, diary, tables['TableCode'].tolist(), day, len(reservations_for_day), rejections)
 
 
 def write_schedule(file_path, diary, tables, day, num_reservations, num_rejections):
+    Path(f'C:/git/UoB.Y4.Dissertation/src/outputs/{file_path}').mkdir(parents=True, exist_ok=True)
     with open(f'C:/git/UoB.Y4.Dissertation/src/outputs/{file_path}/{day.strftime("%Y-%m-%d")}.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
 

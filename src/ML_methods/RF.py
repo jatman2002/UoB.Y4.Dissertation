@@ -39,28 +39,8 @@ def run(restaurant_name):
 
     # load data from csv (raw data)
     X_train, y_train, test_data, features, tables = get_data(restaurant_name, use_label_encoder=False)
-
-    #Hyper parameters
-    n_estimators=200,
-    criterion='gini',
-    max_depth=10,
-    min_samples_split=2,
-    min_samples_leaf=1,
-    min_weight_fraction_leaf=0.0,
-    max_features='sqrt',
-    max_leaf_nodes=None,
-    min_impurity_decrease=0.0,
-    bootstrap=True,
-    oob_score=False,
-    n_jobs=None,
-    random_state=None,
-    verbose=0,
-    warm_start=False,
-    class_weight=None,
-    ccp_alpha=0.0,
-    max_samples=None,
-    monotonic_cst=None
-
+    X_train = X_train[features]
+    
     # fit the RF
     print('TRAINING THE RANDOM FOREST CLASSIFIER')
     classifier = RandomForestClassifier(

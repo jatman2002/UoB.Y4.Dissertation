@@ -2,12 +2,13 @@ import numpy as np
 import pandas as pd
 import csv
 from pathlib import Path
+import os
 
 def write_schedule(file_path, diary, tables, day, num_reservations, num_rejections):
 
-    Path(f'C:/git/UoB.Y4.Dissertation/src/outputs/{file_path}').mkdir(parents=True, exist_ok=True)
+    Path(f'{os.getcwd()}/src/outputs/{file_path}').mkdir(parents=True, exist_ok=True)
 
-    with open(f'C:/git/UoB.Y4.Dissertation/src/outputs/{file_path}/{day.strftime("%Y-%m-%d")}.csv', 'w', newline='') as csvfile:
+    with open(f'{os.getcwd()}/src/outputs/{file_path}/{day.strftime("%Y-%m-%d")}.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
 
         output = [['reservations: ', num_reservations, 'rejections:', num_rejections, 'wasted slots', get_wasted_slots(diary)],[]]
@@ -39,9 +40,9 @@ def get_wasted_slots(diary):
 
 # Load data
 for restaurant_name in range(1,6):
-    train_reservations = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/SQL-DATA/Restaurant-{restaurant_name}-train.csv')
-    test_reservations = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/SQL-DATA/Restaurant-{restaurant_name}-test.csv')
-    tables = pd.read_csv(f'C:/git/UoB.Y4.Dissertation/src/SQL-DATA/Restaurant-{restaurant_name}-tables.csv')
+    train_reservations = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-train.csv')
+    test_reservations = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-test.csv')
+    tables = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-tables.csv')
 
     test_reservations['BookingDate'] = pd.to_datetime(test_reservations['BookingDate'])
 

@@ -2,15 +2,23 @@ import LR
 import MLP
 import OVR
 import RF
+import GridSearch.RFGridSearch as RFGridSearch
+import GridSearch.LRGridSearch as LRGridSearch
 
 import Results
 
-# restaurant_name = '1'
+restaurant_name = '1'
+# RFGridSearch.run(restaurant_name)
+# Results.run(restaurant_name, 'RFGridSearch')
+LRGridSearch.run(restaurant_name)
+Results.run(restaurant_name, 'LRGridSearch')
+
 
 # LR.run(restaurant_name)
 # MLP.run(restaurant_name)
 # OVR.run(restaurant_name)
 # RF.run(restaurant_name)
+# Results.run(restaurant_name, 'RF')
 
 
 # methods = ['LR', 'MLP', 'OVR', 'RF']
@@ -18,17 +26,17 @@ import Results
 #     Results.run(restaurant_name, method)
 
 
-for restaurant_name in range(1,6):
-    Results.run(restaurant_name, 'Existing')
+# for restaurant_name in range(1,6):
+#     Results.run(restaurant_name, 'Existing')
     
-    LR.run(restaurant_name)
-    Results.run(restaurant_name, 'LR')
+#     LR.run(restaurant_name)
+#     Results.run(restaurant_name, 'LR')
 
-    # MLP.run(restaurant_name)
-    # Results.run(restaurant_name, method)
+#     # MLP.run(restaurant_name)
+#     # Results.run(restaurant_name, method)
 
-    OVR.run(restaurant_name)
-    Results.run(restaurant_name, 'OVR')
+#     OVR.run(restaurant_name)
+#     Results.run(restaurant_name, 'OVR')
 
-    RF.run(restaurant_name)
-    Results.run(restaurant_name, 'RF')
+#     RF.run(restaurant_name)
+#     Results.run(restaurant_name, 'RF')

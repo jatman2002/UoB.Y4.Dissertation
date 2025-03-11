@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 import csv
 from pathlib import Path
+import os
 
 def test_predictor(file_path, reservations, tables, predictor, get_best_table, features=[]):
 
@@ -37,8 +38,8 @@ def test_predictor(file_path, reservations, tables, predictor, get_best_table, f
 
 
 def write_schedule(file_path, diary, tables, day, num_reservations, num_rejections):
-    Path(f'C:/git/UoB.Y4.Dissertation/src/outputs/{file_path}').mkdir(parents=True, exist_ok=True)
-    with open(f'C:/git/UoB.Y4.Dissertation/src/outputs/{file_path}/{day.strftime("%Y-%m-%d")}.csv', 'w', newline='') as csvfile:
+    Path(f'{os.getcwd()}/src/outputs/{file_path}').mkdir(parents=True, exist_ok=True)
+    with open(f'{os.getcwd()}/src/outputs/{file_path}/{day.strftime("%Y-%m-%d")}.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
 
         output = [['reservations: ', num_reservations, 'rejections:', num_rejections, 'wasted slots', get_wasted_slots(diary)],[]]

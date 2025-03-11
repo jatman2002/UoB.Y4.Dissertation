@@ -42,6 +42,7 @@ def run(restaurant_name):
     
 
     X_train, y_train, test_data, features, tables = get_data(restaurant_name, use_label_encoder=False)
+    X_train = X_train[features]
 
     # fit the RF
     print('TRAINING THE LOGISTIC REGRESSION CLASSIFIER')

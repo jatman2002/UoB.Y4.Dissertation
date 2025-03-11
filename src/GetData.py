@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 import urllib
+import os
 
 def setup_connection(server_name, db_name):
     connection_string = (
@@ -72,7 +73,7 @@ if __name__ == '__main__':
     for i in range(len(site_codes)):
         site_code = site_codes[i]
 
-        file_path = f'C:/git/UOB.Y4.Dissertation/src/SQL-DATA/Restaurant-{i+1}-'
+        file_path = f'{os.getcwd()}/src/SQL-DATA/Restaurant-{i+1}-'
 
         #----------------------------------------------------------------------------------#
         table_df = get_tables_for_a_site(connection, site_code)

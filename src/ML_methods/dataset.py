@@ -36,6 +36,6 @@ def get_data(restaurant_name, use_label_encoder=False):
     feature_engineering(test_reservations, use_label_encoder)
 
     features = ['GuestCount', 'BookingDateDayOfWeek', 'BookingDateMonth', 'BookingStartTime', 'Duration', 'EndTime']
-    X_train, y_train = train_reservations[features], train_reservations["TableCode"]
+    X_train, y_train = train_reservations.drop('TableCode', axis=1), train_reservations["TableCode"]
     
     return X_train, y_train, test_reservations, features, tables

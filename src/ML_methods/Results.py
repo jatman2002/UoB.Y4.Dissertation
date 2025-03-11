@@ -7,6 +7,8 @@ def run(restaurant_name, method_name):
 
     file_path = f'C:/git/UoB.Y4.Dissertation/src/outputs/Restaurant-{restaurant_name}/{method_name}/'
 
+    Path(file_path).mkdir(parents=True, exist_ok=True)
+
     all_result_files = os.listdir(file_path)
     if 'results.csv' in all_result_files:
         all_result_files.remove('results.csv')

@@ -7,8 +7,6 @@ from sklearn.model_selection import ParameterGrid
 from Test import test_predictor, get_wasted_slots
 from dataset import get_data
 
-import matplotlib.pyplot as plt
-
 def find_table(predictor, reservation, diary, tables):
 
     probabilities = predictor.predict_proba(pd.DataFrame([reservation]))[0]
@@ -82,7 +80,7 @@ def run(restaurant_name):
     booking_date = pd.to_datetime(X['BookingDate']).dt.date
     unique_days = booking_date.unique()
 
-    val_idx = int(len(unique_days) * 84 / 85)
+    val_idx = int(len(unique_days) * 70 / 85)
 
     train_days, val_days = unique_days[:val_idx], unique_days[val_idx:]
 
@@ -133,10 +131,3 @@ def run(restaurant_name):
     test_predictor(f'Restaurant-{restaurant_name}/RFGridSearch', test_data, tables, best_classifier, find_table, features)
     print()
     print('DONE!')
-
-    # plt.figure(figsize=(12, 5))
-    # plt.barh(params, scores, color='skyblue')
-    # plt.xlabel("Mean Test Score")
-    # plt.ylabel("Hyperparameter Combination")
-    # plt.title("Grid Search Hyperparameter Performance")
-    # plt.show()

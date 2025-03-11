@@ -82,7 +82,7 @@ def run(restaurant_name):
     booking_date = pd.to_datetime(X['BookingDate']).dt.date
     unique_days = booking_date.unique()
 
-    val_idx = int(len(unique_days) * 84.5 / 85)
+    val_idx = int(len(unique_days) * 70 / 85)
 
     train_days, val_days = unique_days[:val_idx], unique_days[val_idx:]
 

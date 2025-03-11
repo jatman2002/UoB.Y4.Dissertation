@@ -2,13 +2,17 @@ import LR
 import MLP
 import OVR
 import RF
-import RFGridSearch
+import GridSearch.RFGridSearch as RFGridSearch
+import GridSearch.LRGridSearch as LRGridSearch
 
 import Results
 
 restaurant_name = '1'
-RFGridSearch.run(restaurant_name)
-Results.run(restaurant_name, 'RFGridSearch')
+# RFGridSearch.run(restaurant_name)
+# Results.run(restaurant_name, 'RFGridSearch')
+LRGridSearch.run(restaurant_name)
+Results.run(restaurant_name, 'LRGridSearch')
+
 
 # LR.run(restaurant_name)
 # MLP.run(restaurant_name)

@@ -1,8 +1,13 @@
 # imports
 import pandas as pd
 import numpy as np
-import torch
-import torch.nn as nn
+# import torch
+# import torch.nn as nn
+
+import tensorflow as tf
+import keras
+from keras import models
+from keras.layers import Dense, Input
 
 from sklearn.preprocessing import LabelEncoder
 
@@ -13,7 +18,7 @@ from dataset import get_data
 def find_table(predictor, reservation, diary, tables):
 
     # probabilities = classifier.predict_proba(pd.DataFrame([reservation]))[0]
-    probabilities = predictor(torch.tensor(reservation.astype(float).values, dtype=torch.float32)).detach().numpy()
+    probabilities = predictor.predict(reservation.astype(float).values.reshape(1,-1))[0]
     order_of_tables = np.argsort(probabilities)[::-1]
 
     best_table_index = -1
@@ -49,8 +54,6 @@ def run(restaurant_name):
     X_train, y_train, test_data, features, tables = get_data(restaurant_name, use_label_encoder=True)
     X_train = X_train[features]
 
-    X_train, y_train = torch.tensor(X_train.values, dtype=torch.float32), torch.tensor(y_train.values, dtype=torch.long)
-
     #------------------------------------------------------------------------------------------------------------------------------------
 
     # TRAIN MODEL
@@ -58,36 +61,29 @@ def run(restaurant_name):
     print('TRAINING THE MLP CLASSIFIER')
 
     inp = len(features)
-    hidden_1 = 6 + (np.abs(len(tables) - 6)//4)
-    hidden_2 = 6 + ((np.abs(len(tables) - 6)*2)//4)
-    hidden_3 = 6 + ((np.abs(len(tables) - 6)*3)//4)
+    hidden_1 = inp + (np.abs(len(tables) - inp)//2)
+    # hidden_2 = 6 + ((np.abs(len(tables) - 6)*2)//4)
+    # hidden_3 = 6 + ((np.abs(len(tables) - 6)*3)//4)
     output = len(tables)
 
     # Create MLP
-    model = nn.Sequential(
-        nn.Linear(inp, hidden_1),
-        nn.ReLU(),
-        nn.Linear(hidden_1, hidden_2),
-        nn.ReLU(),
-        nn.Linear(hidden_2, hidden_3),
-        nn.ReLU(),
-        nn.Linear(hidden_3, output),
-        nn.Softmax(dim=0)
-    )
+    # model = Sequential([
+    #     tf.keras.Input()
+    #     Dense(hidden_1, activation='relu'),
+    #     Dense(output, activation='softmax')
+    # ])
 
-    loss_fn = nn.CrossEntropyLoss()
+    inputs = Input(shape=(inp,))
+    x = Dense(hidden_1, activation='relu')(inputs)
+    out = Dense(output, activation='softmax')(x)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    model = models.Model(inputs=inputs, outputs=out)
 
-    num_epochs = 250
-
-    for n in range(num_epochs):
-        y_pred = model(X_train)
-        loss = loss_fn(y_pred, y_train)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
+    model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.001),
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+    
+    model.fit(X_train, y_train, epochs=100, batch_size=32, verbose=1)
     #------------------------------------------------------------------------------------------------------------------------------------
 
     # TEST MODEL

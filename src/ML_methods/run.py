@@ -1,9 +1,9 @@
-import LR
-import MLP
-import OVR
-import RF
-import GridSearch.RFGridSearch as RFGridSearch
-import GridSearch.LRGridSearch as LRGridSearch
+import Models.LR as LR
+import Models.MLP as MLP
+import Models.OVR as OVR
+import Models.RF as RF
+import Models.GridSearch.RFGridSearch as RFGridSearch
+import Models.GridSearch.LRGridSearch as LRGridSearch
 
 import helper.Results as Results
 

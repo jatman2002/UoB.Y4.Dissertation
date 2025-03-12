@@ -51,16 +51,32 @@ def run(restaurant_name):
     # LOAD DATA
 
     
-    X_train, y_train, test_data, features, tables = get_data(restaurant_name)
+    X, y, test_data, features, tables = get_data(restaurant_name)
+
+    booking_date = pd.to_datetime(X['BookingDate']).dt.date
+    unique_days = booking_date.unique()
+
+    val_idx = int(len(unique_days) * 70 / 85)
+
+    train_days, val_days = unique_days[:val_idx], unique_days[val_idx:]
+
+    X_train = X[booking_date.isin(train_days)]
+    X_val = X[booking_date.isin(val_days)]
+
+
     X_train = X_train[features]
+    X_val = X_val[features]
 
     #------------------------------------------------------------------------------------------------------------------------------------
 
     # ONE HOT ENCODING
 
-    y_train_one_hot = pd.get_dummies(pd.DataFrame(y_train, columns=['TableCode']).astype(int), columns=['TableCode'])
-    y_train_one_hot = y_train_one_hot.astype(int)
-    y_train_one_hot = y_train_one_hot.reindex(columns='TableCode_'+tables['TableCode'].astype(str).values, fill_value=0)
+    y_one_hot = pd.get_dummies(pd.DataFrame(y, columns=['TableCode']).astype(int), columns=['TableCode'])
+    y_one_hot = y_one_hot.astype(int)
+    y_one_hot = y_one_hot.reindex(columns='TableCode_'+tables['TableCode'].astype(str).values, fill_value=0)
+
+    y_train = y_one_hot[:len(X_train)]
+    y_val = y_one_hot[len(X_train):]
 
     #------------------------------------------------------------------------------------------------------------------------------------
 
@@ -85,7 +101,13 @@ def run(restaurant_name):
               loss='categorical_crossentropy',
               metrics=['accuracy'])
     
-    model.fit(X_train, y_train_one_hot, epochs=200, batch_size=32, verbose=1)
+    history = model.fit(
+        X_train, 
+        y_train, 
+        epochs=100, 
+        batch_size=32,
+        validation_data=(X_val, y_val),
+        verbose=1)
     #------------------------------------------------------------------------------------------------------------------------------------
 
     # TEST MODEL

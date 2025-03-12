@@ -4,8 +4,8 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import ParameterGrid
 
-from Test import test_predictor, get_wasted_slots
-from dataset import get_data
+from helper.Test import test_predictor, get_wasted_slots
+from helper.dataset import get_data
 
 def find_table(predictor, reservation, diary, tables):
 

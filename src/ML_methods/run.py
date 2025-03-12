@@ -5,20 +5,20 @@ import RF
 import GridSearch.RFGridSearch as RFGridSearch
 import GridSearch.LRGridSearch as LRGridSearch
 
-import Results
+import helper.Results as Results
 
 restaurant_name = '1'
 # RFGridSearch.run(restaurant_name)
 # Results.run(restaurant_name, 'RFGridSearch')
-LRGridSearch.run(restaurant_name)
-Results.run(restaurant_name, 'LRGridSearch')
+# LRGridSearch.run(restaurant_name)
+# Results.run(restaurant_name, 'LRGridSearch')
 
 
 # LR.run(restaurant_name)
-# MLP.run(restaurant_name)
+MLP.run(restaurant_name)
 # OVR.run(restaurant_name)
 # RF.run(restaurant_name)
-# Results.run(restaurant_name, 'RF')
+Results.run(restaurant_name, 'MLP')
 
 
 # methods = ['LR', 'MLP', 'OVR', 'RF']

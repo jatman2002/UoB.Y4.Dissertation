@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 
-from Test import test_predictor
-from dataset import get_data
+from helper.Test import test_predictor
+from helper.dataset import get_data
 
 
 def find_table(predictor, reservation, diary, tables):

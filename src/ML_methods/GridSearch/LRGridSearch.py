@@ -4,8 +4,8 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import ParameterGrid
 
-from Test import test_predictor, get_wasted_slots
-from dataset import get_data
+from helper.Test import test_predictor, get_wasted_slots
+from helper.dataset import get_data
 
 import matplotlib.pyplot as plt
 

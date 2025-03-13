@@ -1,13 +1,8 @@
 # imports
 import pandas as pd
 import numpy as np
-# import torch
-# import torch.nn as nn
-
-import tensorflow as tf
-import keras
-from keras import models
-from keras.layers import Dense, Input
+import torch
+import torch.nn as nn
 
 from sklearn.preprocessing import LabelEncoder
 
@@ -18,7 +13,7 @@ from helper.dataset import get_data
 def find_table(predictor, reservation, diary, tables):
 
     # probabilities = classifier.predict_proba(pd.DataFrame([reservation]))[0]
-    probabilities = predictor(reservation.astype(float).values.reshape(1,-1), training=False)[0]
+    probabilities = predictor(torch.tensor(reservation.astype(float).values, dtype=torch.float32)).detach().numpy()
     order_of_tables = np.argsort(probabilities)[::-1]
 
     best_table_index = -1
@@ -51,32 +46,10 @@ def run(restaurant_name):
     # LOAD DATA
 
     
-    X, y, test_data, features, tables = get_data(restaurant_name)
-
-    booking_date = pd.to_datetime(X['BookingDate']).dt.date
-    unique_days = booking_date.unique()
-
-    val_idx = int(len(unique_days) * 70 / 85)
-
-    train_days, val_days = unique_days[:val_idx], unique_days[val_idx:]
-
-    X_train = X[booking_date.isin(train_days)]
-    X_val = X[booking_date.isin(val_days)]
-
-
+    X_train, y_train, test_data, features, tables = get_data(restaurant_name, use_label_encoder=True)
     X_train = X_train[features]
-    X_val = X_val[features]
 
-    #------------------------------------------------------------------------------------------------------------------------------------
-
-    # ONE HOT ENCODING
-
-    y_one_hot = pd.get_dummies(pd.DataFrame(y, columns=['TableCode']).astype(int), columns=['TableCode'])
-    y_one_hot = y_one_hot.astype(int)
-    y_one_hot = y_one_hot.reindex(columns='TableCode_'+tables['TableCode'].astype(str).values, fill_value=0)
-
-    y_train = y_one_hot[:len(X_train)]
-    y_val = y_one_hot[len(X_train):]
+    X_train, y_train = torch.tensor(X_train.values, dtype=torch.float32), torch.tensor(y_train.values, dtype=torch.long)
 
     #------------------------------------------------------------------------------------------------------------------------------------
 
@@ -85,29 +58,36 @@ def run(restaurant_name):
     print('TRAINING THE MLP CLASSIFIER')
 
     inp = len(features)
-    hidden_1 = inp + (np.abs(len(tables) - inp)//2)
-    # hidden_2 = 6 + ((np.abs(len(tables) - 6)*2)//3)
-    # hidden_3 = 6 + ((np.abs(len(tables) - 6)*3)//4)
+    hidden_1 = 6 + (np.abs(len(tables) - 6)//4)
+    hidden_2 = 6 + ((np.abs(len(tables) - 6)*2)//4)
+    hidden_3 = 6 + ((np.abs(len(tables) - 6)*3)//4)
     output = len(tables)
 
-    inputs = Input(shape=(inp,))
-    x = Dense(hidden_1, activation='relu')(inputs)
-    # x = Dense(hidden_2, activation='relu')(x)
-    out = Dense(output, activation='softmax')(x)
+    # Create MLP
+    model = nn.Sequential(
+        nn.Linear(inp, hidden_1),
+        nn.ReLU(),
+        nn.Linear(hidden_1, hidden_2),
+        nn.ReLU(),
+        nn.Linear(hidden_2, hidden_3),
+        nn.ReLU(),
+        nn.Linear(hidden_3, output),
+        nn.Softmax(dim=0)
+    )
 
-    model = models.Model(inputs=inputs, outputs=out)
+    loss_fn = nn.CrossEntropyLoss()
 
-    model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.001),
-              loss='categorical_crossentropy',
-              metrics=['accuracy'])
-    
-    history = model.fit(
-        X_train, 
-        y_train, 
-        epochs=100, 
-        batch_size=32,
-        validation_data=(X_val, y_val),
-        verbose=1)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+    num_epochs = 250
+
+    for n in range(num_epochs):
+        y_pred = model(X_train)
+        loss = loss_fn(y_pred, y_train)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
     #------------------------------------------------------------------------------------------------------------------------------------
 
     # TEST MODEL

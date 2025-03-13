@@ -1,5 +1,6 @@
 import LR
 import MLPKeras
+import MLP
 import OVR
 import RF
 import GridSearch.RFGridSearch as RFGridSearch
@@ -16,6 +17,7 @@ restaurant_name = '2'
 
 # LR.run(restaurant_name)
 # MLPKeras.run(restaurant_name)
+MLP.run(restaurant_name)
 # OVR.run(restaurant_name)
 # RF.run(restaurant_name)
 Results.run(restaurant_name, 'MLP')

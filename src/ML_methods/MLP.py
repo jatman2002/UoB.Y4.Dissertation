@@ -10,10 +10,14 @@ from helper.Test import test_predictor
 from helper.dataset import get_data
 
 
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
 def find_table(predictor, reservation, diary, tables):
 
     # probabilities = classifier.predict_proba(pd.DataFrame([reservation]))[0]
-    probabilities = predictor(torch.tensor(reservation.astype(float).values, dtype=torch.float32)).detach().numpy()
+    probabilities = predictor(torch.tensor(reservation.astype(float).values, dtype=torch.float32).to(device)).detach().cpu().numpy()
     order_of_tables = np.argsort(probabilities)[::-1]
 
     best_table_index = -1
@@ -49,7 +53,7 @@ def run(restaurant_name):
     X_train, y_train, test_data, features, tables = get_data(restaurant_name, use_label_encoder=True)
     X_train = X_train[features]
 
-    X_train, y_train = torch.tensor(X_train.values, dtype=torch.float32), torch.tensor(y_train.values, dtype=torch.long)
+    X_train, y_train = torch.tensor(X_train.values, dtype=torch.float32).to(device), torch.tensor(y_train.values, dtype=torch.long).to(device)
 
     #------------------------------------------------------------------------------------------------------------------------------------
 
@@ -67,13 +71,15 @@ def run(restaurant_name):
     model = nn.Sequential(
         nn.Linear(inp, hidden_1),
         nn.ReLU(),
-        nn.Linear(hidden_1, hidden_2),
-        nn.ReLU(),
-        nn.Linear(hidden_2, hidden_3),
-        nn.ReLU(),
-        nn.Linear(hidden_3, output),
+        nn.Linear(hidden_1, output),
+        # nn.ReLU(),
+        # nn.Linear(hidden_2, hidden_3),
+        # nn.ReLU(),
+        # nn.Linear(hidden_3, output),
         nn.Softmax(dim=0)
     )
+
+    model.to(device)
 
     loss_fn = nn.CrossEntropyLoss()
 

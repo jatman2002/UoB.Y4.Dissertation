@@ -6,8 +6,8 @@ import torch.nn as nn
 
 from sklearn.preprocessing import LabelEncoder
 
-from Test import test_predictor
-from dataset import get_data
+from helper.Test import test_predictor
+from helper.dataset import get_data
 
 
 def find_table(predictor, reservation, diary, tables):

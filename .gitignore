@@ -1,3 +1,5 @@
 __pycache__
-*.csv
+# *.csv
+src/outputs/
+src/results
 *.pdf

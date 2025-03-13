@@ -8,7 +8,7 @@ import GridSearch.LRGridSearch as LRGridSearch
 
 import helper.Results as Results
 
-restaurant_name = '2'
+restaurant_name = '1'
 # RFGridSearch.run(restaurant_name)
 # Results.run(restaurant_name, 'RFGridSearch')
 # LRGridSearch.run(restaurant_name)
@@ -17,10 +17,10 @@ restaurant_name = '2'
 
 # LR.run(restaurant_name)
 # MLPKeras.run(restaurant_name)
-MLP.run(restaurant_name)
+# MLP.run(restaurant_name)
 # OVR.run(restaurant_name)
 # RF.run(restaurant_name)
-Results.run(restaurant_name, 'MLP')
+Results.run(restaurant_name, 'RL-test')
 Results.run(restaurant_name, 'Existing')
 
 

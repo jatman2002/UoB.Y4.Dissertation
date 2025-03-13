@@ -21,7 +21,8 @@ def find_table(predictor, reservation, diary, tables):
     best_table_index = -1
 
     # in order of probability, find the first one that fits
-    for t in order_of_tables:
+    for t_tensor in order_of_tables:
+        t = t_tensor.item()
         best_table = tables.iloc[t]
 
         # ignore where prob is 0 i.e. the classifier will never choose it
@@ -33,7 +34,7 @@ def find_table(predictor, reservation, diary, tables):
             continue
 
         # 2. time constraint
-        if np.all(diary[t][int(reservation['BookingStartTime']):int(reservation['BookingEndTime'])] != [None]*int(reservation['Duration'])):
+        if torch.any(diary[t][int(reservation['BookingStartTime']):int(reservation['EndTime'])] != 0):
             continue
 
         return t
@@ -55,7 +56,11 @@ restaurant_name = 1
 tables = tables = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-tables.csv')
 train = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/MLP-Soft-Encoding/Restaurant-{restaurant_name}-train.csv')
 
-features = ['GuestCount', 'BookingStartTime', 'Duration', 'BookingEndTime']
+train['BookingStartTime'] = (train['BookingStartTime'] - 36000) / (60*15)
+train['Duration'] = train['Duration'] / (60*15)
+train["EndTime"] = train["BookingStartTime"] + train["Duration"]
+
+features = ['GuestCount', 'BookingStartTime', 'Duration', 'EndTime']
 
 learning_rate = 0.01
 gamma = 0.99  # Discount factor
@@ -67,7 +72,7 @@ optimizer = torch.optim.Adam(policy.parameters(), lr=learning_rate)
 booking_date = pd.to_datetime(train['BookingDate']).dt.date
 unique_days = booking_date.unique()
 
-for _ in range(5):
+for _ in range(1):
     for day in unique_days: # a day is an episode
         env.reset()
         total_reward = 0
@@ -77,12 +82,20 @@ for _ in range(5):
 
             res_details = torch.tensor(reservation[features].astype(float).values, dtype=torch.float32)
             state_details = env.state.flatten()
+            state_details = state_details.float()
+            state_details = (state_details - state_details.mean()) / (state_details.std() + 1e-8)
 
             action_probs = policy(torch.cat((res_details, state_details)))
-            action = torch.multinomial(action_probs, 1).item()
-            reward = env.step(action, reservation)
+            # action = torch.multinomial(action_probs, 1).item()
+            action, reward = env.step(action_probs, reservation)
 
-            log_prob = torch.log(action_probs[action])
+            if action == -1:
+                p = torch.clamp(1 - action_probs.sum(), min=1e-8)
+            else:
+                p = action_probs[action]
+            
+
+            log_prob = torch.log(p)
             discounted_reward = reward * (gamma ** step)
             loss = -log_prob * discounted_reward
 
@@ -97,6 +110,9 @@ for _ in range(5):
 
 
 test_data = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-test.csv')
+test_data['BookingStartTime'] = (test_data['BookingStartTime'] - 36000) / (60*15)
+test_data['Duration'] = test_data['Duration'] / (60*15)
+test_data["EndTime"] = test_data["BookingStartTime"] + test_data["Duration"]
 
 
 test_predictor(f'Restaurant-{restaurant_name}/RL-test', test_data, tables, policy, find_table, features)

@@ -29,7 +29,7 @@ def test_predictor(file_path, reservations, tables, predictor, get_best_table, f
                 rejections += 1
                 continue
 
-            booking_code = str(reservations.loc[reservations.index == reservation.name].iloc[0]['BookingCode'])
+            booking_code = int(reservations.loc[reservations.index == reservation.name].iloc[0]['BookingCode'])
             for i in range(int(reservation['Duration'])):
                 diary[best_table_index][int(reservation['BookingStartTime']) + i] = booking_code
             
@@ -46,10 +46,10 @@ def write_schedule(file_path, diary, tables, day, num_reservations, num_rejectio
             table_output = []
             table_output.append(table_code)
             for slot in table:
-                if slot == None:
+                if slot.item() == 0:
                     table_output.append('')
                 else:
-                    table_output.append(slot)
+                    table_output.append(slot.item())
             output.append(table_output)
 
         writer.writerows(output)
@@ -60,10 +60,11 @@ def get_wasted_slots(diary):
     for table in diary:
         wasted_slots = 0
         for slot in table:
-            if slot == None:
+            if slot.item() == 0:
                 wasted_slots += 1
             else:
                 total_wasted_slots += wasted_slots % min_booking_length
                 wasted_slots = 0
 
     return total_wasted_slots
+

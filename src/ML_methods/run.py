@@ -8,7 +8,7 @@
 
 import helper.Results as Results
 
-restaurant_name = '1'
+restaurant_name = '2'
 # RFGridSearch.run(restaurant_name)
 # Results.run(restaurant_name, 'RFGridSearch')
 # LRGridSearch.run(restaurant_name)

@@ -14,9 +14,15 @@ class RestaurantEnv:
 
     def step(self, action_prob, reservation):
 
-        order_of_tables = torch.argsort(action_prob, descending=True)
+        if torch.argmax(action_prob).item() == len(self.tables):
+            return len(self.tables), self.incorrect_table_penalty
+
+        order_of_tables = torch.argsort(action_prob[:len(self.tables)], descending=True)
 
         t = 1
+
+        start = int(reservation['BookingStartTime'])
+        end = int(reservation['EndTime'])
 
         for action_tensor in order_of_tables:
         
@@ -29,15 +35,15 @@ class RestaurantEnv:
             if self.tables.iloc[action]['MaxCovers'] < reservation['GuestCount']:
                 t+=1
                 continue
-            if torch.any(self.state[action][int(reservation['BookingStartTime']):int(reservation['EndTime'])] != 0).item():
+            if torch.any(self.state[action][start:end] != 0).item():
                 t+=1
                 continue
             
-            self.state[action, int(reservation['BookingStartTime']):int(reservation['EndTime'])] = reservation['BookingCode']
+            self.state[action, start:end] = reservation['BookingCode']
 
             return action, (100 - self.get_wasted_slots()) / t
         
-        return -1, self.incorrect_table_penalty
+        return len(self.tables), self.incorrect_table_penalty
 
     def get_wasted_slots(self):
         min_booking_length = 6

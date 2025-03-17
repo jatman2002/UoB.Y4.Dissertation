@@ -13,12 +13,13 @@ def find_table(predictor, reservation, diary, tables):
     # probabilities = classifier.predict_proba(pd.DataFrame([reservation]))[0]
 
     res_details = torch.tensor(reservation.astype(float).values, dtype=torch.float32)
-    state_details = diary.flatten()
+    state_details = (diary.flatten() != 0).int()
 
     probabilities = predictor(torch.cat((res_details, state_details))).detach().numpy()
-    order_of_tables = np.argsort(probabilities)[::-1]
+    order_of_tables = np.argsort(probabilities[:len(tables)])[::-1]
 
-    best_table_index = -1
+    if np.argmax(probabilities) == len(tables):
+        return -1
 
     # in order of probability, find the first one that fits
     for t_tensor in order_of_tables:
@@ -39,18 +40,34 @@ def find_table(predictor, reservation, diary, tables):
 
         return t
 
-    return best_table_index
+    return -1
 
 class PolicyNetwork(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(PolicyNetwork, self).__init__()
-        self.fc = nn.Linear(input_dim, output_dim)
+        # self.fc1 = nn.Linear(input_dim, (input_dim+output_dim)//2)
+        # self.fc2 = nn.Linear((input_dim+output_dim)//2, output_dim)
+
+        self.layers = nn.Sequential(
+            nn.Linear(input_dim, (input_dim+output_dim)*4//5),
+            nn.ReLU(),
+            nn.Linear((input_dim+output_dim)*4//5, (input_dim+output_dim)*3//5),
+            nn.ReLU(),
+            nn.Linear((input_dim+output_dim)*3//5, (input_dim+output_dim)*2//5),
+            nn.ReLU(),
+            nn.Linear((input_dim+output_dim)*2//5, (input_dim+output_dim)//5),
+            nn.ReLU(),
+            nn.Linear((input_dim+output_dim)//5, output_dim),
+            nn.Softmax(dim=-1)
+            # nn.Linear(input_dim, output_dim),
+            # nn.Softmax(dim=-1)
+        )
 
     def forward(self, x):
-        return torch.softmax(self.fc(x), dim=-1)
+        return self.layers(x)
     
 
-restaurant_name = 1
+restaurant_name = 2
     
 
 tables = tables = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-tables.csv')
@@ -66,36 +83,33 @@ learning_rate = 0.01
 gamma = 0.99  # Discount factor
 
 env = RestaurantEnv(tables)
-policy = PolicyNetwork(len(features)+len(tables)*64, len(tables))
+policy = PolicyNetwork(len(features)+len(tables)*64, len(tables)+1)
 optimizer = torch.optim.Adam(policy.parameters(), lr=learning_rate)
 
 booking_date = pd.to_datetime(train['BookingDate']).dt.date
 unique_days = booking_date.unique()
 
-for _ in range(1):
+for it in range(1):
     for day in unique_days: # a day is an episode
         env.reset()
         total_reward = 0
         step = 0
 
-        for _, reservation in train.loc[booking_date == day].iterrows():
+        bookings_on_day = train.loc[booking_date == day]
+
+        for _, reservation in bookings_on_day.iterrows():
 
             res_details = torch.tensor(reservation[features].astype(float).values, dtype=torch.float32)
-            state_details = env.state.flatten()
-            state_details = state_details.float()
-            state_details = (state_details - state_details.mean()) / (state_details.std() + 1e-8)
+            state_details = (env.state.flatten() != 0).int()
+            # state_details = state_details.float()
+            # state_details = (state_details - state_details.mean()) / (state_details.std() + 1e-8)
 
             action_probs = policy(torch.cat((res_details, state_details)))
             # action = torch.multinomial(action_probs, 1).item()
             action, reward = env.step(action_probs, reservation)
-
-            if action == -1:
-                p = torch.clamp(1 - action_probs.sum(), min=1e-8)
-            else:
-                p = action_probs[action]
             
 
-            log_prob = torch.log(p)
+            log_prob = torch.log(action_probs[action])
             discounted_reward = reward * (gamma ** step)
             loss = -log_prob * discounted_reward
 
@@ -103,10 +117,10 @@ for _ in range(1):
             loss.backward()
             optimizer.step()
 
-            total_reward += reward
+            total_reward += reward / len(bookings_on_day)
             step += 1
 
-        print(f"Day {day}, Total Reward: {total_reward}")
+        print(f"Iteration {it}, Day {day}, Total Reward: {total_reward}")
 
 
 test_data = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-test.csv')

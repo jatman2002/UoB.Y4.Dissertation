@@ -1,10 +1,10 @@
-import LR
-import MLPKeras
-import MLP
-import OVR
-import RF
-import GridSearch.RFGridSearch as RFGridSearch
-import GridSearch.LRGridSearch as LRGridSearch
+# import LR
+# import MLPKeras
+# import MLP
+# import OVR
+# import RF
+# import GridSearch.RFGridSearch as RFGridSearch
+# import GridSearch.LRGridSearch as LRGridSearch
 
 import helper.Results as Results
 
@@ -17,10 +17,10 @@ restaurant_name = '2'
 
 # LR.run(restaurant_name)
 # MLPKeras.run(restaurant_name)
-MLP.run(restaurant_name)
+# MLP.run(restaurant_name)
 # OVR.run(restaurant_name)
 # RF.run(restaurant_name)
-Results.run(restaurant_name, 'MLP')
+Results.run(restaurant_name, 'RL-test')
 Results.run(restaurant_name, 'Existing')
 
 

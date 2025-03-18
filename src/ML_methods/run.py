@@ -16,7 +16,7 @@ restaurant_name = '2'
 
 
 # LR.run(restaurant_name)
-MLPKeras.run(restaurant_name)
+# MLPKeras.run(restaurant_name)
 MLP.run(restaurant_name)
 # OVR.run(restaurant_name)
 # RF.run(restaurant_name)

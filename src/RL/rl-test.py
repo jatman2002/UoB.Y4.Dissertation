@@ -15,7 +15,7 @@ def find_table(predictor, reservation, diary, tables):
     res_details = torch.tensor(reservation.astype(float).values, dtype=torch.float32, device=device)
     state_details = (diary.flatten() != 0).int()
 
-    probabilities = predictor(torch.cat((res_details, state_details))).detach().numpy()
+    probabilities = predictor(torch.cat((res_details, state_details))).detach().cpu().numpy()
     order_of_tables = np.argsort(probabilities[:len(tables)])[::-1]
 
     if np.argmax(probabilities) == len(tables):

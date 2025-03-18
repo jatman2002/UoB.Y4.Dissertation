@@ -5,16 +5,12 @@ import os
 # import torch
 # import torch.nn as nn
 
-import tensorflow as tf
-import keras
 from keras import models
 from keras.layers import Dense, Input
-from keras import backend as K
 
-from sklearn.preprocessing import LabelEncoder
 
 from helper.Test import test_predictor
-from helper.dataset import get_data, feature_engineering
+from helper.dataset import feature_engineering
 
 
 def find_table(predictor, reservation, diary, tables):

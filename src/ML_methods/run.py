@@ -1,6 +1,6 @@
 # import LR
-# import MLPKeras
-# import MLP
+import MLPKeras
+import MLP
 # import OVR
 # import RF
 # import GridSearch.RFGridSearch as RFGridSearch
@@ -16,17 +16,17 @@ restaurant_name = '2'
 
 
 # LR.run(restaurant_name)
-# MLPKeras.run(restaurant_name)
-# MLP.run(restaurant_name)
+MLPKeras.run(restaurant_name)
+MLP.run(restaurant_name)
 # OVR.run(restaurant_name)
 # RF.run(restaurant_name)
-Results.run(restaurant_name, 'RL-test')
-Results.run(restaurant_name, 'Existing')
+# Results.run(restaurant_name, 'RL-test')
+# Results.run(restaurant_name, 'Existing')
 
 
-# methods = ['LR', 'MLP', 'OVR', 'RF']
-# for method in methods:
-#     Results.run(restaurant_name, method)
+methods = ['MLP', 'MLPKeras', 'Existing']
+for method in methods:
+    Results.run(restaurant_name, method)
 
 
 # for restaurant_name in range(1,6):

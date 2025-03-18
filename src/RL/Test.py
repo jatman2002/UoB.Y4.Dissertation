@@ -6,7 +6,7 @@ from pathlib import Path
 import os
 import torch
 
-def test_predictor(file_path, reservations, tables, predictor, get_best_table, features=[]):
+def test_predictor(file_path, reservations, tables, predictor, get_best_table, device, features=[]):
 
     booking_date_as_dt = pd.to_datetime(reservations['BookingDate']).dt.date
     unique_days = booking_date_as_dt.unique()
@@ -19,7 +19,7 @@ def test_predictor(file_path, reservations, tables, predictor, get_best_table, f
         reservations_for_day = reservations.loc[booking_date_as_dt == day]
         rejections = 0
 
-        diary = torch.zeros((len(tables), 64), dtype=torch.int)
+        diary = torch.zeros((len(tables), 64), dtype=torch.int, device=device)
 
         for i in range(len(reservations_for_day)):
             reservation = reservations_for_day.iloc[i]

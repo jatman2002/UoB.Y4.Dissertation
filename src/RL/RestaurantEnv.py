@@ -1,16 +1,16 @@
 import torch
 
 class RestaurantEnv:
-    def __init__(self, tables):
+    def __init__(self, tables, device):
         self.tables = tables
-        self.state = torch.zeros((len(tables), 64), dtype=torch.float32)
+        self.state = torch.zeros((len(tables), 64), dtype=torch.float32, device=device)
 
         self.incorrect_table_penalty = -1000
 
-        self.reset()
+        self.reset(device)
 
-    def reset(self):
-        self.state = torch.zeros((len(self.tables), 64), dtype=torch.int)
+    def reset(self, device):
+        self.state = torch.zeros((len(self.tables), 64), dtype=torch.int, device=device)
 
     def step(self, action_prob, reservation):
 

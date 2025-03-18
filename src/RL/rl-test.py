@@ -12,7 +12,7 @@ def find_table(predictor, reservation, diary, tables):
 
     # probabilities = classifier.predict_proba(pd.DataFrame([reservation]))[0]
 
-    res_details = torch.tensor(reservation.astype(float).values, dtype=torch.float32)
+    res_details = torch.tensor(reservation.astype(float).values, dtype=torch.float32, device=device)
     state_details = (diary.flatten() != 0).int()
 
     probabilities = predictor(torch.cat((res_details, state_details))).detach().numpy()
@@ -67,6 +67,12 @@ class PolicyNetwork(nn.Module):
         return self.layers(x)
     
 
+device = torch.device(
+    "cuda" if torch.cuda.is_available() else
+    "mps" if torch.backends.mps.is_available() else
+    "cpu"
+)    
+
 restaurant_name = 2
     
 
@@ -82,8 +88,8 @@ features = ['GuestCount', 'BookingStartTime', 'Duration', 'EndTime']
 learning_rate = 0.01
 gamma = 0.99  # Discount factor
 
-env = RestaurantEnv(tables)
-policy = PolicyNetwork(len(features)+len(tables)*64, len(tables)+1)
+env = RestaurantEnv(tables, device)
+policy = PolicyNetwork(len(features)+len(tables)*64, len(tables)+1).to(device)
 optimizer = torch.optim.Adam(policy.parameters(), lr=learning_rate)
 
 booking_date = pd.to_datetime(train['BookingDate']).dt.date
@@ -91,7 +97,7 @@ unique_days = booking_date.unique()
 
 for it in range(1):
     for day in unique_days: # a day is an episode
-        env.reset()
+        env.reset(device)
         total_reward = 0
         step = 0
 
@@ -99,7 +105,7 @@ for it in range(1):
 
         for _, reservation in bookings_on_day.iterrows():
 
-            res_details = torch.tensor(reservation[features].astype(float).values, dtype=torch.float32)
+            res_details = torch.tensor(reservation[features].astype(float).values, dtype=torch.float32, device=device)
             state_details = (env.state.flatten() != 0).int()
             # state_details = state_details.float()
             # state_details = (state_details - state_details.mean()) / (state_details.std() + 1e-8)
@@ -129,4 +135,4 @@ test_data['Duration'] = test_data['Duration'] / (60*15)
 test_data["EndTime"] = test_data["BookingStartTime"] + test_data["Duration"]
 
 
-test_predictor(f'Restaurant-{restaurant_name}/RL-test', test_data, tables, policy, find_table, features)
+test_predictor(f'Restaurant-{restaurant_name}/RL-test', test_data, tables, policy, find_table, device, features)

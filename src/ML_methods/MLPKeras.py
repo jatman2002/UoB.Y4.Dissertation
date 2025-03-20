@@ -119,7 +119,7 @@ def run(restaurant_name):
     history = model.fit(
         X_train, 
         y_train, 
-        epochs=1, 
+        epochs=100, 
         batch_size=64,
         validation_data=(X_val, y_val),
         verbose=1)

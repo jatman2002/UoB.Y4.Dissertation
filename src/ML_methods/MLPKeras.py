@@ -58,12 +58,12 @@ def run(restaurant_name):
 
     feature_engineering(train, False)
 
+    features = ['GuestCount', 'BookingDateDayOfWeek', 'BookingDateMonth', 'BookingStartTime', 'Duration', 'EndTime']
+    t_s = [f'T{t}_S{s}' for t in range(len(tables)) for s in range(64)]
+
     X = train.drop('TableCode', axis=1)
     y = train['TableCode']
 
-
-
-    features = ['GuestCount', 'BookingDateDayOfWeek', 'BookingDateMonth', 'BookingStartTime', 'Duration', 'EndTime']
     test_data = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/MLP-State/Restaurant-{restaurant_name}-test.csv')
 
     feature_engineering(test_data, False)
@@ -78,9 +78,8 @@ def run(restaurant_name):
     X_train = X[booking_date.isin(train_days)]
     X_val = X[booking_date.isin(val_days)]
 
-
-    # X_train = X_train_with_date[features]
-    # X_val = X_val[features]
+    X_train = X_train[np.concatenate((features, t_s))]
+    X_val = X_val[np.concatenate((features, t_s))]
 
     #------------------------------------------------------------------------------------------------------------------------------------
 

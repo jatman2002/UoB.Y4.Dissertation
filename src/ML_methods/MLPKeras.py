@@ -37,7 +37,7 @@ def find_table(predictor, reservation, diary, tables):
             continue
 
         # 2. time constraint
-        if np.all(diary[t][int(reservation['BookingStartTime']):int(reservation['EndTime'])] != [None]*int(reservation['Duration'])):
+        if np.all(diary[t][int(reservation['BookingStartTime']):int(reservation['EndTime'])] != 0):
             continue
 
         return t
@@ -119,7 +119,7 @@ def run(restaurant_name):
     history = model.fit(
         X_train, 
         y_train, 
-        epochs=100, 
+        epochs=1, 
         batch_size=64,
         validation_data=(X_val, y_val),
         verbose=1)

@@ -48,7 +48,7 @@ def write_schedule(file_path, diary, tables, day, num_reservations, num_rejectio
             table_output = []
             table_output.append(table_code)
             for slot in table:
-                if slot == None:
+                if slot == 0:
                     table_output.append('')
                 else:
                     table_output.append(slot)
@@ -62,7 +62,7 @@ def get_wasted_slots(diary):
     for table in diary:
         wasted_slots = 0
         for slot in table:
-            if slot == None:
+            if slot == 0:
                 wasted_slots += 1
             else:
                 total_wasted_slots += wasted_slots % min_booking_length

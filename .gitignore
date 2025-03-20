@@ -2,6 +2,8 @@ __pycache__
 # *.csv
 src/outputs/
 src/results
-src/SQL-DATA/MLP-Soft-Encoding/
-src/SQL-DATA/MLP-State/
+src/SQL-DATA/MLP-Soft-Encoding
+src/SQL-DATA/MLP-State
+*-test.csv
+*-train.csv
 *.pdf

@@ -114,7 +114,7 @@ def run(restaurant_name):
     model = models.Model(inputs=inputs, outputs=out)
 
     model.compile(optimizer='adam',
-              loss='KLDivergence',
+              loss='categorical_crossentropy',
               metrics=['accuracy'])
     
     history = model.fit(

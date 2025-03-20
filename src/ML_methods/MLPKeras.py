@@ -132,5 +132,3 @@ def run(restaurant_name):
     test_predictor(f'Restaurant-{restaurant_name}/MLPKeras', test_data, tables, model, find_table, features)
     print()
     print('DONE!')
-
-run('1')

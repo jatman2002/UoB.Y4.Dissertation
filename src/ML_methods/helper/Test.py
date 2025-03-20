@@ -14,16 +14,17 @@ def test_predictor(file_path, reservations, tables, predictor, get_best_table, f
         features = ['GuestCount', 'BookingDateDayOfWeek', 'BookingDateMonth', 'BookingStartTime', 'Duration', 'EndTime']
 
     for i, day in enumerate(unique_days):
-        print(f'Looking at day {i} / {len(unique_days)}\t{day=}', end='\r')
+        st_ing = f'Looking at day {i:>3} / {len(unique_days):>3}\t{day=}'
         reservations_for_day = reservations.loc[booking_date_as_dt == day]
         rejections = 0
 
-        diary = []
-        for i in range(len(tables)):
-            diary.append([None] * 64)
+        diary = np.zeros((len(tables), 64))
 
-        for i in range(len(reservations_for_day)):
-            reservation = reservations_for_day.iloc[i]
+        for j in range(len(reservations_for_day)):
+
+            print(f'{st_ing} \t res - {j:>3} / {len(reservations_for_day):>3}', end='\r')
+
+            reservation = reservations_for_day.iloc[j]
             
             best_table_index = get_best_table(predictor, reservation[features], diary, tables)
             if best_table_index == -1:
@@ -31,8 +32,8 @@ def test_predictor(file_path, reservations, tables, predictor, get_best_table, f
                 continue
 
             booking_code = str(reservations.loc[reservations.index == reservation.name].iloc[0]['BookingCode'])
-            for i in range(int(reservation['Duration'])):
-                diary[best_table_index][int(reservation['BookingStartTime']) + i] = booking_code
+            for d in range(int(reservation['Duration'])):
+                diary[best_table_index, int(reservation['BookingStartTime']) + d] = booking_code
             
         write_schedule(file_path, diary, tables['TableCode'].tolist(), day, len(reservations_for_day), rejections)
 

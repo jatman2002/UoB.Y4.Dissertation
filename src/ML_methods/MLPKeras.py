@@ -6,7 +6,7 @@ import os
 # import torch.nn as nn
 
 from keras import models
-from keras.layers import Dense, Input
+from keras.layers import Dense, Input, Dropout
 
 
 from helper.Test import test_predictor
@@ -99,15 +99,22 @@ def run(restaurant_name):
     print('TRAINING THE MLP CLASSIFIER')
 
     inp = len(features) + len(tables)*64
-    hidden_1 = inp + (np.abs(len(tables) - inp)//4)
-    hidden_2 = 6 + ((np.abs(len(tables) - 6)*2)//4)
-    hidden_3 = 6 + ((np.abs(len(tables) - 6)*3)//4)
+    hidden_1 = inp + (np.abs(len(tables) - inp)//6)
+    hidden_2 = 6 + ((np.abs(len(tables) - inp)*2)//6)
+    hidden_3 = 6 + ((np.abs(len(tables) - inp)*3)//6)
+    hidden_4 = 6 + ((np.abs(len(tables) - inp)*4)//6)
+    hidden_5 = 6 + ((np.abs(len(tables) - inp)*5)//6)
     output = len(tables)
 
     inputs = Input(shape=(inp,))
     x = Dense(hidden_1, activation='relu')(inputs)
     x = Dense(hidden_2,activation='relu')(x)
+    x = Dropout(0.2)(x)
     x = Dense(hidden_3,activation='relu')(x)
+    x = Dropout(0.2)(x)
+    x = Dense(hidden_4,activation='relu')(x)
+    x = Dropout(0.2)(x)
+    x = Dense(hidden_5,activation='relu')(x)
     out = Dense(output, activation='softmax')(x)
 
     model = models.Model(inputs=inputs, outputs=out)

@@ -21,8 +21,8 @@ def test_predictor(file_path, reservations, tables, predictor, get_best_table, d
 
         diary = torch.zeros((len(tables), 64), dtype=torch.int, device=device)
 
-        for i in range(len(reservations_for_day)):
-            reservation = reservations_for_day.iloc[i]
+        for j in range(len(reservations_for_day)):
+            reservation = reservations_for_day.iloc[j]
             
             best_table_index = get_best_table(predictor, reservation[features], diary, tables)
             if best_table_index == -1:
@@ -30,8 +30,8 @@ def test_predictor(file_path, reservations, tables, predictor, get_best_table, d
                 continue
 
             booking_code = int(reservations.loc[reservations.index == reservation.name].iloc[0]['BookingCode'])
-            for i in range(int(reservation['Duration'])):
-                diary[best_table_index][int(reservation['BookingStartTime']) + i] = booking_code
+            for d in range(int(reservation['Duration'])):
+                diary[best_table_index][int(reservation['BookingStartTime']) + d] = booking_code
             
         write_schedule(file_path, diary, tables['TableCode'].tolist(), day, len(reservations_for_day), rejections)
 

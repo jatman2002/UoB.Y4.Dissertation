@@ -29,7 +29,7 @@ def run(restaurant_name, method_name):
             
             results.append(li)
 
-    df = pd.DataFrame(results, columns=['Date', 'ReservationCount', 'Rejections', 'WastedSlots'])
+    df = pd.DataFrame(results, columns=['Date', 'ReservationCount', 'Rejections', 'WastedCount'])
 
 
     Path(f'{os.getcwd()}/src/results/Restaurant-{restaurant_name}/').mkdir(parents=True, exist_ok=True)

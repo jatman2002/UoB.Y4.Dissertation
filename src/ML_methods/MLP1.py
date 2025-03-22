@@ -91,6 +91,7 @@ def run(restaurant_name):
 
     inputs = Input(shape=(inp,))
     x = Dense(500, activation='relu')(inputs)
+    x = Dense(100, activation='relu')(x)
     out = Dense(output, activation='softmax')(x)
 
     model = models.Model(inputs=inputs, outputs=out)

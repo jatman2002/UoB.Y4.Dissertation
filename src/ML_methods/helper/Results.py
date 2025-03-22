@@ -36,7 +36,7 @@ def run(restaurant_name, method_name):
 
     df.to_csv(f'{os.getcwd()}/src/results/Restaurant-{restaurant_name}/{restaurant_name}-{method_name}.csv')
 
-    wasted_count = df['WastedSlots'].sum()
+    wasted_count = df['WastedCount'].sum()
     rejections = df['Rejections'].sum()
 
     print(f'{method_name=}\t{wasted_count=}\t{rejections=}')

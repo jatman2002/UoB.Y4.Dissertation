@@ -1,6 +1,8 @@
 # import LR
-import MLPKeras
-import MLP
+import MLP1 as MLP1
+import MLP2 as MLP2
+import MLP3 as MLP3
+import MLP4 as MLP4
 # import OVR
 # import RF
 # import GridSearch.RFGridSearch as RFGridSearch
@@ -9,38 +11,14 @@ import MLP
 import helper.Results as Results
 
 restaurant_name = '1'
-# RFGridSearch.run(restaurant_name)
-# Results.run(restaurant_name, 'RFGridSearch')
-# LRGridSearch.run(restaurant_name)
-# Results.run(restaurant_name, 'LRGridSearch')
 
 
-# LR.run(restaurant_name)
-MLPKeras.run(restaurant_name)
-Results.run(restaurant_name, 'MLPKeras')
-# MLP.run(restaurant_name)
-# OVR.run(restaurant_name)
-# RF.run(restaurant_name)
-# Results.run(restaurant_name, 'RL-test')
-# Results.run(restaurant_name, 'Existing')
+MLP1.run(restaurant_name)
+MLP2.run(restaurant_name)
+MLP3.run(restaurant_name)
+MLP4.run(restaurant_name)
 
-
-# methods = ['MLP', 'MLPKeras', 'Existing']
-# for method in methods:
-#     Results.run(restaurant_name, method)
-
-
-# for restaurant_name in range(1,6):
-#     Results.run(restaurant_name, 'Existing')
-    
-#     LR.run(restaurant_name)
-#     Results.run(restaurant_name, 'LR')
-
-#     # MLP.run(restaurant_name)
-#     # Results.run(restaurant_name, method)
-
-#     OVR.run(restaurant_name)
-#     Results.run(restaurant_name, 'OVR')
-
-#     RF.run(restaurant_name)
-#     Results.run(restaurant_name, 'RF')
+Results.run(restaurant_name, 'MLP1')
+Results.run(restaurant_name, 'MLP2')
+Results.run(restaurant_name, 'MLP3')
+Results.run(restaurant_name, 'MLP4')

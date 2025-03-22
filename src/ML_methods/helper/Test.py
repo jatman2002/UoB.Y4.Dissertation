@@ -36,6 +36,7 @@ def test_predictor(file_path, reservations, tables, predictor, get_best_table, f
                 diary[best_table_index, int(reservation['BookingStartTime']) + d] = booking_code
             
         write_schedule(file_path, diary, tables['TableCode'].tolist(), day, len(reservations_for_day), rejections)
+    print()
 
 
 def write_schedule(file_path, diary, tables, day, num_reservations, num_rejections):

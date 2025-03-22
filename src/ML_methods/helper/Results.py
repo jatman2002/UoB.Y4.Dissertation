@@ -17,6 +17,7 @@ def run(restaurant_name, method_name):
 
     for file in all_result_files:
         file_name = file.strip('.csv')
+        print(file_name)
         with open(file_path+file, 'r', newline='') as csv_reader:
             reader = csv.reader(csv_reader)
             header = next(reader)

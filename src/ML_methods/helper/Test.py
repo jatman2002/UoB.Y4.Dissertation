@@ -44,7 +44,7 @@ def write_schedule(file_path, diary, tables, day, num_reservations, num_rejectio
     with open(f'{os.getcwd()}/src/outputs/{file_path}/{day.strftime("%Y-%m-%d")}.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
 
-        output = [['reservations: ', num_reservations, 'rejections:', num_rejections, 'wasted count', get_wasted_slots(diary)[1]],[]]
+        output = [['reservations: ', num_reservations, 'rejections:', num_rejections, 'wasted count', get_wasted_slots(diary)],[]]
         for table_code, table in zip(tables, diary):
             table_output = []
             table_output.append(table_code)
@@ -71,4 +71,4 @@ def get_wasted_slots(diary):
                 wasted_count += 1
                 wasted_slots = 0
 
-    return total_wasted_slots, wasted_count
+    return wasted_count

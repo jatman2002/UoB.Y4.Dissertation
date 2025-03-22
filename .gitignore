@@ -4,6 +4,7 @@ src/outputs/
 src/results
 src/SQL-DATA/MLP-Soft-Encoding
 src/SQL-DATA/MLP-State
+src/SQL-DATA/MLP-State-Soft-Label
 *-test.csv
 *-train.csv
 *.pdf

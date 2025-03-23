@@ -88,10 +88,12 @@ def run(restaurant_name):
 
     inp = len(features) + len(t_s)
     output = len(tables)
+    hidden1 = inp - (output - inp)//3
+    hidden2 = inp - (2*(output - inp))//3
 
     inputs = Input(shape=(inp,))
-    x = Dense(500, activation='relu')(inputs)
-    x = Dense(100, activation='relu')(x)
+    x = Dense(hidden1, activation='relu')(inputs)
+    x = Dense(hidden2, activation='relu')(x)
     out = Dense(output, activation='softmax')(x)
 
     model = models.Model(inputs=inputs, outputs=out)
@@ -103,7 +105,7 @@ def run(restaurant_name):
     model.fit(
         X_train, 
         y_train, 
-        epochs=100, 
+        epochs=1, 
         batch_size=64,
         verbose=1)
     #------------------------------------------------------------------------------------------------------------------------------------

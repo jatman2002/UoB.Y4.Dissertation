@@ -57,14 +57,23 @@ def write_schedule(file_path, diary, tables, day, num_reservations, num_rejectio
 def get_wasted_slots(diary):
     min_booking_length = 6
     total_wasted_slots = 0
+    wasted_count = 0
     for table in diary:
-        wasted_slots = 0
+        empty_slots = 0
         for slot in table:
-            if slot.item() == 0:
-                wasted_slots += 1
-            else:
-                total_wasted_slots += wasted_slots % min_booking_length
-                wasted_slots = 0
+            # if slot == 0:
+            #     wasted_slots += 1
+            # else:
+            #     total_wasted_slots += wasted_slots % min_booking_length
+            #     wasted_count += 1
+            #     wasted_slots = 0
 
-    return total_wasted_slots
+            if slot != 0:
+                if empty_slots < min_booking_length and empty_slots > 0:
+                    wasted_count += 1
+                empty_slots = 0
+                continue
+            empty_slots += 1
+
+    return wasted_count
 

@@ -88,12 +88,10 @@ def run(restaurant_name):
 
     inp = len(features) + len(t_s)
     output = len(tables)
-    hidden1 = inp - (output - inp)//3
-    hidden2 = inp - (2*(output - inp))//3
+    hidden1 = inp - (inp - output)//2
 
     inputs = Input(shape=(inp,))
     x = Dense(hidden1, activation='relu')(inputs)
-    x = Dense(hidden2, activation='relu')(x)
     out = Dense(output, activation='softmax')(x)
 
     model = models.Model(inputs=inputs, outputs=out)

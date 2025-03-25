@@ -99,10 +99,10 @@ optimizer = optim.Adam(policy_network.parameters(), lr=1e-4, amsgrad=True)
 # Extra params
 epsilon = 0.5
 gamma = 0.9
-C = 5
+C = 10
 
 # Replay Buffer
-memory = ReplayMemory(100)
+memory = ReplayMemory(1000)
 
 booking_date = pd.to_datetime(train['BookingDate']).dt.date
 unique_days = booking_date.unique()
@@ -135,10 +135,12 @@ for day in unique_days: # a day is an episode
 
         step += 1
 
-        if len(memory) < 16:
+        epsilon = max(0.1, 0.99*epsilon)
+
+        if len(memory) < 32:
             continue
 
-        batch = memory.sample(16)
+        batch = memory.sample(32)
 
         y_j = []
         idx = 0
@@ -157,7 +159,7 @@ for day in unique_days: # a day is an episode
         optimizer.zero_grad()
         loss.backward()
         # In-place gradient clipping
-        torch.nn.utils.clip_grad_value_(policy_network.parameters(), 100)
+        torch.nn.utils.clip_grad_value_(policy_network.parameters(), 1.0)
         optimizer.step()
 
         # Update target network every C steps

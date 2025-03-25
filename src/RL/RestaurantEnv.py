@@ -5,7 +5,7 @@ class RestaurantEnv:
         self.tables = tables
         self.state = torch.zeros((len(tables), 64), dtype=torch.float32, device=device)
 
-        self.incorrect_table_penalty = -1000
+        self.incorrect_table_penalty = -75
 
         self.reset(device)
 

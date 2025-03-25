@@ -144,7 +144,7 @@ for day in unique_days: # a day is an episode
         idx = 0
         for (_, _, r, s_t_1, term, n_res, _) in batch:
             if term:
-                y_j.append(torch.tensor(r, dtype=torch.float32))
+                y_j.append(torch.tensor(r, dtype=torch.float32, device=device))
             else:
                 y_j.append(r + gamma*torch.max(target_network(torch.cat((n_res, s_t_1)))))
             idx += 1

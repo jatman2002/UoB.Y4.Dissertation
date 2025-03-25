@@ -116,7 +116,7 @@ for day in unique_days: # a day is an episode
 
     for _, reservation in bookings_on_day.iterrows():
 
-        print(f"Day {day}\t{step+1:>3}/{len(bookings_on_day):<3}", end="\t")
+        print(f"Day {day}\t{step+1:>3}/{len(bookings_on_day):<3}", end="\r")
         
         res_details = torch.tensor(reservation[features].astype(float).values, dtype=torch.float32, device=device)
         state_details = (env.state.flatten() != 0).int()
@@ -127,6 +127,7 @@ for day in unique_days: # a day is an episode
             action = torch.argmax(policy_network(torch.cat((res_details, state_details))))
 
         reward = env.step(action.item(), reservation)
+        total_reward += reward
 
         if step < len(bookings_on_day)-1:
             next_res = torch.tensor(bookings_on_day.iloc[step+1][features].astype(float).values, dtype=torch.float32, device=device)
@@ -168,7 +169,7 @@ for day in unique_days: # a day is an episode
         if step % C == 0:
             target_network.load_state_dict(policy_network.state_dict())
 
-        print(f"{reward=:>5}")
+    print(f"\nDay {day}\t{total_reward=:>5}")
 
 
 test_data = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-test.csv')

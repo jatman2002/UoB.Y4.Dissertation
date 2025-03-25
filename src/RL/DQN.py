@@ -115,6 +115,8 @@ for day in unique_days: # a day is an episode
     bookings_on_day = train.loc[booking_date == day]
 
     for _, reservation in bookings_on_day.iterrows():
+
+        print(f"Day {day}\t{step+1:>3}/{len(bookings_on_day):<3}", end="\t")
         
         res_details = torch.tensor(reservation[features].astype(float).values, dtype=torch.float32, device=device)
         state_details = (env.state.flatten() != 0).int()
@@ -166,7 +168,7 @@ for day in unique_days: # a day is an episode
         if step % C == 0:
             target_network.load_state_dict(policy_network.state_dict())
 
-        print(f"Day {day}\t{step+1:>3}/{len(bookings_on_day):<3}", end='\r')
+        print(f"{reward=:>5}")
 
 
 test_data = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-test.csv')

@@ -14,7 +14,7 @@ from Test import test_predictor
 class DqnNetwork(nn.Module):
     def __init__(self, input_size, output_size):
         super(DqnNetwork, self).__init__()
-        self.l1 = nn.Linear(input_size, input_size+(input_size-output_size)//5)
+        self.l1 = nn.Linear(input_size, input_size-(input_size-output_size)//5)
         self.l2 = nn.Linear(input_size-(input_size-output_size)//5, input_size-2*(input_size-output_size)//5)
         self.l3 = nn.Linear(input_size-2*(input_size-output_size)//5, input_size-3*(input_size-output_size)//5)
         self.l4 = nn.Linear(input_size-3*(input_size-output_size)//5, input_size-4*(input_size-output_size)//5)

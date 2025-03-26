@@ -6,6 +6,8 @@ class RestaurantEnv:
         self.state = torch.zeros((len(tables), 64), dtype=torch.float32, device=device)
 
         self.incorrect_table_penalty = -75
+        self.wrong_table_size = -50
+        self.table_is_full = -50
 
         self.reset(device)
 
@@ -22,15 +24,15 @@ class RestaurantEnv:
 
         #heavily penalise incorrect tables
         if self.tables.iloc[action]['MinCovers'] > reservation['GuestCount']:
-            return self.incorrect_table_penalty
+            return self.wrong_table_size
         if self.tables.iloc[action]['MaxCovers'] < reservation['GuestCount']:
-            return self.incorrect_table_penalty
+            return self.wrong_table_size
         if torch.any(self.state[action][start:end] != 0).item():
-            return self.incorrect_table_penalty
+            return self.table_is_full
         
         self.state[action, start:end] = reservation['BookingCode']
 
-        return (100 - self.get_wasted_slots())
+        return 100 - self.get_wasted_slots()
 
     def get_wasted_slots(self):
         min_booking_length = 6

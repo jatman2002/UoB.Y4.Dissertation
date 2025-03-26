@@ -97,7 +97,7 @@ target_network.load_state_dict(policy_network.state_dict())
 optimizer = optim.Adam(policy_network.parameters(), lr=1e-4, amsgrad=True)
 
 # Extra params
-epsilon = 0.5
+epsilon = 0.9
 gamma = 0.9
 C = 10
 
@@ -121,11 +121,13 @@ for day in unique_days: # a day is an episode
         res_details = torch.tensor(reservation[features].astype(float).values, dtype=torch.float32, device=device)
         state_details = (env.state.flatten() != 0).int()
 
+        # Explore vs Exploit
         if np.random.rand() < epsilon:
             action = torch.randint(0,len(tables)+1, (1,)).to(device)
         else:
             action = torch.argmax(policy_network(torch.cat((res_details, state_details))))
 
+        # Take the action
         reward = env.step(action.item(), reservation)
         total_reward += reward
 
@@ -134,15 +136,18 @@ for day in unique_days: # a day is an episode
         else:
             next_res = None
 
+        # Add to replay buffer
         memory.push([state_details, action, reward, (env.state.flatten() != 0).int(), step == len(bookings_on_day)-1, next_res, res_details])
 
         step += 1
 
-        epsilon = max(0.1, 0.99*epsilon)
+        # Epsilon decay
+        epsilon = max(0.1, 0.9999*epsilon)
 
         if len(memory) < 32:
             continue
 
+        # replay sampling
         batch = memory.sample(32)
 
         y_j = []
@@ -156,6 +161,7 @@ for day in unique_days: # a day is an episode
 
         x_j = [policy_network(torch.cat((res, s_t))).max() for (s_t, _, _, _, _, _, res) in batch]
 
+        # Update policy network
         criterion = nn.SmoothL1Loss()
         loss = criterion(torch.stack(x_j).to(device), torch.stack(y_j).to(device))
 

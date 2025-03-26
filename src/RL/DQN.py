@@ -49,23 +49,29 @@ def find_table(predictor, reservation, diary, tables):
     res_details = torch.tensor(reservation.astype(float).values, dtype=torch.float32, device=device)
     state_details = (diary.flatten() != 0).int()
 
-    action = torch.argmax(predictor(torch.cat((res_details, state_details)))).item()
+    actions = torch.argsort(predictor(torch.cat((res_details, state_details)))).tolist()
 
-    if action == len(tables):
-        return -1
+    for a in range(len(actions)):
     
-    start = int(reservation['BookingStartTime'])
-    end = int(reservation['EndTime'])
+        start = int(reservation['BookingStartTime'])
+        end = int(reservation['EndTime'])
 
-    #heavily penalise incorrect tables
-    if tables.iloc[action]['MinCovers'] > reservation['GuestCount']:
-        return -1
-    if tables.iloc[action]['MaxCovers'] < reservation['GuestCount']:
-        return -1
-    if torch.any(diary[action][start:end] != 0).item():
-        return -1
-    
-    return action
+        action = actions[a]
+
+        if action == len(tables):
+            return -1
+
+        #heavily penalise incorrect tables
+        if tables.iloc[action]['MinCovers'] > reservation['GuestCount']:
+            continue
+        if tables.iloc[action]['MaxCovers'] < reservation['GuestCount']:
+            continue
+        if torch.any(diary[action][start:end] != 0).item():
+            continue
+        
+        return action
+
+    return -1
 
 
     

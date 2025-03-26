@@ -23,7 +23,9 @@ class DqnNetwork(nn.Module):
     def forward(self, x):
         x = F.relu(self.l1(x))
         x = F.relu(self.l2(x))
-        return self.l3(x)
+        x = F.relu(self.l3(x))
+        x = F.relu(self.l4(x))
+        return self.l5(x)
     
 
 class ReplayMemory:

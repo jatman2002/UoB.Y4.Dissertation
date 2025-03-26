@@ -162,7 +162,7 @@ for day in unique_days: # a day is an episode
         x_j = [policy_network(torch.cat((res, s_t))).max() for (s_t, _, _, _, _, _, res) in batch]
 
         # Update policy network
-        criterion = nn.SmoothL1Loss()
+        criterion = nn.HuberLoss()
         loss = criterion(torch.stack(x_j).to(device), torch.stack(y_j).to(device))
 
         optimizer.zero_grad()

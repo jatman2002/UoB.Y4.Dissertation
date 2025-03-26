@@ -32,7 +32,7 @@ class RestaurantEnv:
         
         self.state[action, start:end] = reservation['BookingCode']
 
-        return 100 - self.get_wasted_slots()
+        return 150 - self.get_wasted_slots()
 
     def get_wasted_slots(self):
         min_booking_length = 6

@@ -14,25 +14,34 @@ class RestaurantEnv:
     def reset(self, device):
         self.state = torch.zeros((len(self.tables), 64), dtype=torch.int, device=device)
 
-    def step(self, action, reservation):
-
-        if action == len(self.tables):
-            return self.incorrect_table_penalty
+    def step(self, action_list, reservation):
 
         start = int(reservation['BookingStartTime'])
         end = int(reservation['EndTime'])
 
-        #heavily penalise incorrect tables
-        if self.tables.iloc[action]['MinCovers'] > reservation['GuestCount']:
-            return self.wrong_table_size
-        if self.tables.iloc[action]['MaxCovers'] < reservation['GuestCount']:
-            return self.wrong_table_size
-        if torch.any(self.state[action][start:end] != 0).item():
-            return self.table_is_full
-        
-        self.state[action, start:end] = reservation['BookingCode']
+        reward = 0
 
-        return 150 - self.get_wasted_slots()
+        for a in range(len(action_list)):
+            action = action_list[a]
+
+            if action == len(self.tables):
+                return len(self.tables), self.incorrect_table_penalty
+
+            #heavily penalise incorrect tables
+            if self.tables.iloc[action]['MinCovers'] > reservation['GuestCount']:
+                reward += self.wrong_table_size
+                continue
+            if self.tables.iloc[action]['MaxCovers'] < reservation['GuestCount']:
+                reward +=  self.wrong_table_size
+                continue
+            if torch.any(self.state[action][start:end] != 0).item():
+                reward +=  self.table_is_full
+                continue
+            
+            self.state[action, start:end] = reservation['BookingCode']
+            return action, (200 - self.get_wasted_slots()*0.1 + reward)/(a+1)
+
+        return len(self.tables), self.incorrect_table_penalty
 
     def get_wasted_slots(self):
         min_booking_length = 6

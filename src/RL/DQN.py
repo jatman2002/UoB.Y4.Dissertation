@@ -41,6 +41,7 @@ class ReplayMemory:
         return len(self.buffer)
 
 def find_table(predictor, reservation, diary, tables):
+    
     res_details = torch.tensor(reservation.astype(float).values, dtype=torch.float32, device=device)
     state_details = (diary.flatten() != 0).int()
 
@@ -119,25 +120,26 @@ for day in unique_days: # a day is an episode
         print(f"Day {day}\t{step+1:>3}/{len(bookings_on_day):<3}", end="\r")
         
         res_details = torch.tensor(reservation[features].astype(float).values, dtype=torch.float32, device=device)
-        state_details = (env.state.flatten() != 0).int()
+        current_state = env.state.detach()
+        state_details = (current_state.flatten() != 0).int()
 
         # Explore vs Exploit
         if np.random.rand() < epsilon:
-            action = torch.randint(0,len(tables)+1, (1,)).to(device)
+            actions = torch.randperm(len(tables)).to(device)
         else:
-            action = torch.argmax(policy_network(torch.cat((res_details, state_details))))
+            actions = torch.argsort(policy_network(torch.cat((res_details, state_details))))
 
         # Take the action
-        reward = env.step(action.item(), reservation)
+        action, reward = env.step(actions.tolist(), reservation)
         total_reward += reward
 
         if step < len(bookings_on_day)-1:
-            next_res = torch.tensor(bookings_on_day.iloc[step+1][features].astype(float).values, dtype=torch.float32, device=device)
+            next_res = bookings_on_day.iloc[step+1][features]
         else:
             next_res = None
 
         # Add to replay buffer
-        memory.push([state_details, action, reward, (env.state.flatten() != 0).int(), step == len(bookings_on_day)-1, next_res, res_details])
+        memory.push([current_state, action, reward, env.state.detach(), step == len(bookings_on_day)-1, next_res, reservation[features]])
 
         step += 1
 
@@ -151,15 +153,18 @@ for day in unique_days: # a day is an episode
         batch = memory.sample(32)
 
         y_j = []
-        idx = 0
-        for (_, _, r, s_t_1, term, n_res, _) in batch:
+        x_j = []
+        for (s_t, _, r, s_t_1, term, n_res, res) in batch:
+            inp_res = torch.tensor(res.astype(float).values, dtype=torch.float32, device=device)
+            inp_state = (s_t.flatten() != 0).int()
+            x_j.append(policy_network(torch.cat((inp_res, inp_state)))[find_table(policy_network, res, s_t, tables)])
             if term:
                 y_j.append(torch.tensor(r, dtype=torch.float32, device=device))
             else:
-                y_j.append(r + gamma*torch.max(target_network(torch.cat((n_res, s_t_1)))))
-            idx += 1
-
-        x_j = [policy_network(torch.cat((res, s_t))).max() for (s_t, _, _, _, _, _, res) in batch]
+                policy_action = find_table(policy_network, n_res, s_t_1, tables)
+                inp_n_res = torch.tensor(n_res.astype(float).values, dtype=torch.float32, device=device)
+                inp_n_state = (s_t_1.flatten() != 0).int()
+                y_j.append(r + gamma*(target_network(torch.cat((inp_n_res, inp_n_state)))[policy_action]))
 
         # Update policy network
         criterion = nn.HuberLoss()
@@ -175,7 +180,7 @@ for day in unique_days: # a day is an episode
         if step % C == 0:
             target_network.load_state_dict(policy_network.state_dict())
 
-    print(f"\nDay {day}\t{total_reward=:>5}")
+    print(f"\nDay {day}\tproportional_reward={total_reward/len(bookings_on_day):>5}")
 
 
 test_data = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-test.csv')

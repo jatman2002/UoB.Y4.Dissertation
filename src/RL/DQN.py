@@ -115,7 +115,7 @@ memory = ReplayMemory(1000)
 booking_date = pd.to_datetime(train['BookingDate']).dt.date
 unique_days = booking_date.unique()
 
-for day in unique_days[:1]: # a day is an episode
+for day in unique_days: # a day is an episode
     env.reset(device)
     total_reward = 0
     step = 0

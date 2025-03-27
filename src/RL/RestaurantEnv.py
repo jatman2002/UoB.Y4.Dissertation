@@ -6,8 +6,8 @@ class RestaurantEnv:
         self.state = torch.zeros((len(tables), 64), dtype=torch.float32, device=device)
 
         self.incorrect_table_penalty = -100
-        self.wrong_table_size = -50
-        self.table_is_full = -50
+        self.wrong_table_size = -10
+        self.table_is_full = -10
 
         self.reset(device)
 
@@ -36,7 +36,7 @@ class RestaurantEnv:
                 continue
             
             self.state[action, start:end] = reservation['BookingCode']
-            return action, (200 - self.get_wasted_slots()*0.1 + reward)/(a+1)
+            return action, (300 - self.get_wasted_slots()*0.1 + reward)/(a+1)
 
         return len(self.tables), self.incorrect_table_penalty
 

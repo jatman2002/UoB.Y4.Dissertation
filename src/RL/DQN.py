@@ -162,16 +162,25 @@ for day in unique_days: # a day is an episode
         y_j = []
         x_j = []
         for (s_t, _, r, s_t_1, term, n_res, res) in batch:
-            inp_res = torch.tensor(res.astype(float).values, dtype=torch.float32, device=device)
-            inp_state = (s_t.flatten() != 0).int()
-            x_j.append(policy_network(torch.cat((inp_res, inp_state)))[find_table(policy_network, res, s_t, tables)])
+            policy_action = find_table(policy_network, res, s_t, tables)
+            if policy_action == -1: # rejection
+                x_j.append(torch.tensor(0, dtype=torch.float32, device=device))
+            else:
+                inp_res = torch.tensor(res.astype(float).values, dtype=torch.float32, device=device)
+                inp_state = (s_t.flatten() != 0).int()
+                x_j.append(policy_network(torch.cat((inp_res, inp_state)))[policy_action])
+
             if term:
                 y_j.append(torch.tensor(r, dtype=torch.float32, device=device))
             else:
-                policy_action = find_table(policy_network, n_res, s_t_1, tables)
-                inp_n_res = torch.tensor(n_res.astype(float).values, dtype=torch.float32, device=device)
-                inp_n_state = (s_t_1.flatten() != 0).int()
-                y_j.append(r + gamma*(target_network(torch.cat((inp_n_res, inp_n_state)))[policy_action]))
+                policy_action_n_res = find_table(policy_network, n_res, s_t_1, tables)
+
+                if policy_action_n_res == -1: # if it rejects
+                    y_j.append(torch.tensor(r, dtype=torch.float32, device=device))
+                else:
+                    inp_n_res = torch.tensor(n_res.astype(float).values, dtype=torch.float32, device=device)
+                    inp_n_state = (s_t_1.flatten() != 0).int()
+                    y_j.append(r + gamma*(target_network(torch.cat((inp_n_res, inp_n_state)))[policy_action_n_res]))
 
         # Update policy network
         criterion = nn.HuberLoss()

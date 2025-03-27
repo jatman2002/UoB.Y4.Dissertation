@@ -132,7 +132,7 @@ for day in unique_days: # a day is an episode
 
         # Explore vs Exploit
         if np.random.rand() < epsilon:
-            actions = torch.randperm(len(tables)+1).to(device)
+            actions = torch.randperm(len(tables)).to(device)
         else:
             actions = torch.argsort(policy_network(torch.cat((res_details, state_details))))
 

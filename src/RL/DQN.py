@@ -51,25 +51,22 @@ def find_table(predictor, reservation, diary, tables):
 
     actions = torch.argsort(predictor(torch.cat((res_details, state_details)))).tolist()
 
-    for a in range(len(actions)):
+    for a_i in range(len(actions)):
     
         start = int(reservation['BookingStartTime'])
         end = int(reservation['EndTime'])
 
-        action = actions[a]
-
-        if action == len(tables):
-            return -1
+        a = actions[a_i]
 
         #heavily penalise incorrect tables
-        if tables.iloc[action]['MinCovers'] > reservation['GuestCount']:
+        if tables.iloc[a]['MinCovers'] > reservation['GuestCount']:
             continue
-        if tables.iloc[action]['MaxCovers'] < reservation['GuestCount']:
+        if tables.iloc[a]['MaxCovers'] < reservation['GuestCount']:
             continue
-        if torch.any(diary[action][start:end] != 0).item():
+        if torch.any(diary[a][start:end] != 0).item():
             continue
         
-        return action
+        return a
 
     return -1
 
@@ -100,7 +97,7 @@ env = RestaurantEnv(tables, device)
 
 # Define networks
 input_size = len(features) + len(tables)*64
-output_size = len(tables) + 1
+output_size = len(tables)
 policy_network = DqnNetwork(input_size, output_size).to(device)
 target_network = DqnNetwork(input_size, output_size).to(device)
 target_network.load_state_dict(policy_network.state_dict())
@@ -118,7 +115,7 @@ memory = ReplayMemory(1000)
 booking_date = pd.to_datetime(train['BookingDate']).dt.date
 unique_days = booking_date.unique()
 
-for day in unique_days: # a day is an episode
+for day in unique_days[:1]: # a day is an episode
     env.reset(device)
     total_reward = 0
     step = 0

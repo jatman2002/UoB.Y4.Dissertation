@@ -24,9 +24,6 @@ class RestaurantEnv:
         for a in range(len(action_list)):
             action = action_list[a]
 
-            if action == len(self.tables):
-                return len(self.tables), self.incorrect_table_penalty
-
             #heavily penalise incorrect tables
             if self.tables.iloc[action]['MinCovers'] > reservation['GuestCount']:
                 reward += self.wrong_table_size

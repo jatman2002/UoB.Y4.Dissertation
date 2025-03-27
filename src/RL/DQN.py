@@ -14,19 +14,17 @@ from Test import test_predictor
 class DqnNetwork(nn.Module):
     def __init__(self, input_size, output_size):
         super(DqnNetwork, self).__init__()
-        self.l1 = nn.Linear(input_size, input_size-(input_size-output_size)//5)
-        self.l2 = nn.Linear(input_size-(input_size-output_size)//5, input_size-2*(input_size-output_size)//5)
-        self.l3 = nn.Linear(input_size-2*(input_size-output_size)//5, input_size-3*(input_size-output_size)//5)
-        self.l4 = nn.Linear(input_size-3*(input_size-output_size)//5, input_size-4*(input_size-output_size)//5)
-        self.l5 = nn.Linear(input_size-4*(input_size-output_size)//5, output_size)
+        self.l1 = nn.Linear(input_size, 1024)
+        self.l2 = nn.Linear(1024, 512)
+        self.l3 = nn.Linear(512, output_size)
+        # self.l4 = nn.Linear(256, output_size)
 
     def forward(self, x):
         x = F.relu(self.l1(x))
         x = F.relu(self.l2(x))
-        x = F.relu(self.l3(x))
-        x = F.relu(self.l4(x))
-        return self.l5(x)
-    
+        # x = F.relu(self.l3(x))
+        # return self.l4(x)
+        return self.l3(x)
 
 class ReplayMemory:
     def __init__(self, buffer_size):
@@ -111,118 +109,97 @@ optimizer = optim.Adam(policy_network.parameters(), lr=1e-4, amsgrad=True)
 epsilon = 0.9
 gamma = 0.9
 C = 10
-batch_size = 32
+batch_size = 64
 
 # Replay Buffer
-memory = ReplayMemory(1000)
+memory = ReplayMemory(10000)
 
 booking_date = pd.to_datetime(train['BookingDate']).dt.date
 unique_days = booking_date.unique()
 
-for day in unique_days: # a day is an episode
-    env.reset(device)
-    total_reward = 0
-    step = 0
+for repeat in range(3):
 
-    bookings_on_day = train.loc[booking_date == day]
+    for day in unique_days: # a day is an episode
+        env.reset(device)
+        total_reward = 0
+        step = 0
 
-    for _, reservation in bookings_on_day.iterrows():
+        bookings_on_day = train.loc[booking_date == day]
 
-        print(f"Day {day}\t{step+1:>3}/{len(bookings_on_day):<3}", end="\r")
-        
-        res_details = torch.tensor(reservation[features].astype(float).values, dtype=torch.float32, device=device)
-        current_state = env.state.detach()
-        state_details = (current_state.flatten() != 0).int()
+        for _, reservation in bookings_on_day.iterrows():
 
-        # Explore vs Exploit
-        if np.random.rand() < epsilon:
-            actions = torch.randperm(len(tables)).to(device)
-        else:
-            actions = torch.argsort(policy_network(torch.cat((res_details, state_details))))
+            print(f"Repeat {repeat} \t Day {day}\t{step+1:>3}/{len(bookings_on_day):<3}", end="\r")
+            
+            res_details = torch.tensor(reservation[features].astype(float).values, dtype=torch.float32, device=device)
+            current_state = env.state.detach()
+            state_details = (current_state.flatten() != 0).int()
 
-        # Take the action
-        action, reward = env.step(actions.tolist(), reservation)
-        total_reward += reward
+            # Explore vs Exploit
+            if np.random.rand() < epsilon:
+                actions = torch.randperm(len(tables)).to(device)
+            else:
+                actions = torch.argsort(policy_network(torch.cat((res_details, state_details))))
 
-        if step < len(bookings_on_day)-1:
-            next_res = bookings_on_day.iloc[step+1][features]
-        else:
-            next_res = None
+            # Take the action
+            action, reward = env.step(actions.tolist(), reservation)
+            total_reward += reward
 
-        # Add to replay buffer
-        memory.push([current_state, action, reward, env.state.detach(), step == len(bookings_on_day)-1, next_res, reservation[features]])
+            if step < len(bookings_on_day)-1:
+                next_res = bookings_on_day.iloc[step+1][features]
+            else:
+                next_res = None
 
-        step += 1
+            # Add to replay buffer
+            memory.push([current_state, action, reward, env.state.detach(), step == len(bookings_on_day)-1, next_res, reservation[features]])
 
-        # Epsilon decay
-        epsilon = max(0.1, 0.9999*epsilon)
+            step += 1
 
-        if len(memory) < batch_size:
-            continue
+            # Epsilon decay
+            epsilon = max(0.1, 0.9999*epsilon)
 
-        # replay sampling
-        batch = memory.sample(batch_size)
+            if len(memory) < batch_size:
+                continue
 
-        s_t, a_t, r_t, s_t_1, term, n_res, res = zip(*batch)
+            # replay sampling
+            batch = memory.sample(batch_size)
 
-        y_j = torch.tensor(r_t, dtype=torch.float32, device=device)
-        x_j = torch.zeros(batch_size, dtype=torch.float32, device=device)
+            s_t, a_t, r_t, s_t_1, term, n_res, res = zip(*batch)
 
-        inp_res_torch = torch.stack([torch.tensor(r.astype(float).values, dtype=torch.float32, device=device) for r in res])
-        n_res_torch = torch.stack([torch.tensor(r.astype(float).values, dtype=torch.float32, device=device) if not r is None else torch.tensor([-1.0,-1.0,-1.0,-1.0], device=device) for r in n_res])
+            y_j = torch.tensor(r_t, dtype=torch.float32, device=device)
+            x_j = torch.zeros(batch_size, dtype=torch.float32, device=device)
 
-        inp_state_torch = torch.stack([(s.flatten() != 0).int() for s in s_t])
-        inp_n_state_torch = torch.stack([(s.flatten() != 0).int() for s in s_t_1])
+            inp_res_torch = torch.stack([torch.tensor(r.astype(float).values, dtype=torch.float32, device=device) for r in res])
+            n_res_torch = torch.stack([torch.tensor(r.astype(float).values, dtype=torch.float32, device=device) if not r is None else torch.tensor([-1.0,-1.0,-1.0,-1.0], device=device) for r in n_res])
 
-        policy_actions = torch.tensor([find_table(policy_network, r, s, tables) for s, r in zip(s_t, res)], device=device)
-        rejection = policy_actions == -1
-        x_j[~rejection] = policy_network(torch.cat((inp_res_torch[~rejection], inp_state_torch[~rejection]), dim=1)).gather(1, policy_actions[~rejection].unsqueeze(1)).flatten()
+            inp_state_torch = torch.stack([(s.flatten() != 0).int() for s in s_t])
+            inp_n_state_torch = torch.stack([(s.flatten() != 0).int() for s in s_t_1])
+
+            policy_actions = torch.tensor([find_table(policy_network, r, s, tables) for s, r in zip(s_t, res)], device=device)
+            rejection = policy_actions == -1
+            x_j[~rejection] = policy_network(torch.cat((inp_res_torch[~rejection], inp_state_torch[~rejection]), dim=1)).gather(1, policy_actions[~rejection].unsqueeze(1)).flatten()
 
 
-        term_states = torch.tensor([term for _, _, _, _, term, _, _ in batch], device=device)
-        policy_n_actions = torch.tensor([find_table(policy_network, n_r, n_s, tables) if not n_r is None else -1 for n_r, n_s in zip(n_res, s_t_1)], device=device)
-        rejection = policy_n_actions == -1
-        invalid_actions = torch.logical_or(term_states, rejection)
-        y_j[~invalid_actions] += gamma*(target_network(torch.cat((n_res_torch[~invalid_actions], inp_n_state_torch[~invalid_actions]), dim=1)).gather(1, policy_n_actions[~rejection].unsqueeze(1))).flatten()
+            term_states = torch.tensor([term for _, _, _, _, term, _, _ in batch], device=device)
+            policy_n_actions = torch.tensor([find_table(policy_network, n_r, n_s, tables) if not n_r is None else -1 for n_r, n_s in zip(n_res, s_t_1)], device=device)
+            rejection = policy_n_actions == -1
+            invalid_actions = torch.logical_or(term_states, rejection)
+            y_j[~invalid_actions] += gamma*(target_network(torch.cat((n_res_torch[~invalid_actions], inp_n_state_torch[~invalid_actions]), dim=1)).gather(1, policy_n_actions[~rejection].unsqueeze(1))).flatten()
 
-        # y_j = []
-        # x_j = []
-        # for (s_t, _, r, s_t_1, term, n_res, res) in batch:
-        #     policy_action = find_table(policy_network, res, s_t, tables)
-        #     if policy_action == -1: # rejection
-        #         x_j.append(torch.tensor(0, dtype=torch.float32, device=device))
-        #     else:
-        #         inp_res = torch.tensor(res.astype(float).values, dtype=torch.float32, device=device)
-        #         inp_state = (s_t.flatten() != 0).int()
-        #         x_j.append(policy_network(torch.cat((inp_res, inp_state)))[policy_action])
+            # Update policy network
+            criterion = nn.HuberLoss()
+            loss = criterion(x_j, y_j)
 
-        #     if term:
-        #         y_j.append(torch.tensor(r, dtype=torch.float32, device=device))
-        #     else:
-        #         policy_action_n_res = find_table(policy_network, n_res, s_t_1, tables)
+            optimizer.zero_grad()
+            loss.backward()
+            # In-place gradient clipping
+            torch.nn.utils.clip_grad_value_(policy_network.parameters(), 1.0)
+            optimizer.step()
 
-        #         if policy_action_n_res == -1: # if it rejects
-        #             y_j.append(torch.tensor(r, dtype=torch.float32, device=device))
-        #         else:
-        #             inp_n_res = torch.tensor(n_res.astype(float).values, dtype=torch.float32, device=device)
-        #             inp_n_state = (s_t_1.flatten() != 0).int()
-                    # y_j.append(r + gamma*(target_network(torch.cat((inp_n_res, inp_n_state)))[policy_action_n_res]))
+            # Update target network every C steps
+            if step % C == 0:
+                target_network.load_state_dict(policy_network.state_dict())
 
-        # Update policy network
-        criterion = nn.HuberLoss()
-        loss = criterion(x_j, y_j)
-
-        optimizer.zero_grad()
-        loss.backward()
-        # In-place gradient clipping
-        torch.nn.utils.clip_grad_value_(policy_network.parameters(), 1.0)
-        optimizer.step()
-
-        # Update target network every C steps
-        if step % C == 0:
-            target_network.load_state_dict(policy_network.state_dict())
-
-    print(f"\nDay {day}\tproportional_reward={total_reward/len(bookings_on_day):>5}")
+        print(f"\nRepeat {repeat} \t Day {day}\tproportional_reward={total_reward/len(bookings_on_day):>5}")
 
 
 test_data = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-test.csv')
@@ -231,4 +208,4 @@ test_data['Duration'] = test_data['Duration'] / (60*15)
 test_data["EndTime"] = test_data["BookingStartTime"] + test_data["Duration"]
 
 print()
-test_predictor(f'Restaurant-{restaurant_name}/DQN', test_data, tables, policy_network, find_table, device, features)
+test_predictor(f'Restaurant-{restaurant_name}/DQN1', test_data, tables, policy_network, find_table, device, features)

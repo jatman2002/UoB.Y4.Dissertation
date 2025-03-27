@@ -5,9 +5,9 @@ class RestaurantEnv:
         self.tables = tables
         self.state = torch.zeros((len(tables), 64), dtype=torch.float32, device=device)
 
-        self.incorrect_table_penalty = -100
-        self.wrong_table_size = -10
-        self.table_is_full = -10
+        self.incorrect_table_penalty = -200
+        self.wrong_table_size = -50
+        self.table_is_full = -50
 
         self.reset(device)
 

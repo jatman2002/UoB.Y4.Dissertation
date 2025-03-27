@@ -48,7 +48,7 @@ def find_table(predictor, reservation, diary, tables):
     state_details = (diary.flatten() != 0).int()
 
     with torch.no_grad():
-        actions = torch.argsort(predictor(torch.cat((res_details, state_details)))).tolist()
+        actions = torch.argsort(predictor(torch.cat((res_details, state_details))), descending=True).tolist()
 
         for a_i in range(len(actions)):
         
@@ -138,7 +138,7 @@ for repeat in range(3):
             if np.random.rand() < epsilon:
                 actions = torch.randperm(len(tables)).to(device)
             else:
-                actions = torch.argsort(policy_network(torch.cat((res_details, state_details))))
+                actions = torch.argsort(policy_network(torch.cat((res_details, state_details))), descending=True)
 
             # Take the action
             action, reward = env.step(actions.tolist(), reservation)

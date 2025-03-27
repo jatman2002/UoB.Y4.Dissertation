@@ -74,10 +74,12 @@ def find_table(predictor, reservation, diary, tables):
     
 
 device = torch.device(
-    "cuda" if torch.cuda.is_available() else
+    "cuda:1" if torch.cuda.is_available() else
     "mps" if torch.backends.mps.is_available() else
     "cpu"
-)    
+)
+
+print(f'{device=}\t{torch.cuda.current_device()=}')
 
 # Load Data
 restaurant_name = 1

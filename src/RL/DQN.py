@@ -49,26 +49,27 @@ def find_table(predictor, reservation, diary, tables):
     res_details = torch.tensor(reservation.astype(float).values, dtype=torch.float32, device=device)
     state_details = (diary.flatten() != 0).int()
 
-    actions = torch.argsort(predictor(torch.cat((res_details, state_details)))).tolist()
+    with torch.no_grad():
+        actions = torch.argsort(predictor(torch.cat((res_details, state_details)))).tolist()
 
-    for a_i in range(len(actions)):
-    
-        start = int(reservation['BookingStartTime'])
-        end = int(reservation['EndTime'])
-
-        a = actions[a_i]
-
-        #heavily penalise incorrect tables
-        if tables.iloc[a]['MinCovers'] > reservation['GuestCount']:
-            continue
-        if tables.iloc[a]['MaxCovers'] < reservation['GuestCount']:
-            continue
-        if torch.any(diary[a][start:end] != 0).item():
-            continue
+        for a_i in range(len(actions)):
         
-        return a
+            start = int(reservation['BookingStartTime'])
+            end = int(reservation['EndTime'])
 
-    return -1
+            a = actions[a_i]
+
+            #heavily penalise incorrect tables
+            if tables.iloc[a]['MinCovers'] > reservation['GuestCount']:
+                continue
+            if tables.iloc[a]['MaxCovers'] < reservation['GuestCount']:
+                continue
+            if torch.any(diary[a][start:end] != 0).item():
+                continue
+            
+            return a
+
+        return -1
 
 
     
@@ -79,7 +80,7 @@ device = torch.device(
     "cpu"
 )
 
-print(f'{device=}\t{torch.cuda.current_device()=}')
+# print(f'{device=}\t{torch.cuda.current_device()=}')
 
 # Load Data
 restaurant_name = 1
@@ -110,6 +111,7 @@ optimizer = optim.Adam(policy_network.parameters(), lr=1e-4, amsgrad=True)
 epsilon = 0.9
 gamma = 0.9
 C = 10
+batch_size = 5
 
 # Replay Buffer
 memory = ReplayMemory(1000)
@@ -155,38 +157,60 @@ for day in unique_days: # a day is an episode
         # Epsilon decay
         epsilon = max(0.1, 0.9999*epsilon)
 
-        if len(memory) < 32:
+        if len(memory) < batch_size:
             continue
 
         # replay sampling
-        batch = memory.sample(32)
+        batch = memory.sample(batch_size)
 
-        y_j = []
-        x_j = []
-        for (s_t, _, r, s_t_1, term, n_res, res) in batch:
-            policy_action = find_table(policy_network, res, s_t, tables)
-            if policy_action == -1: # rejection
-                x_j.append(torch.tensor(0, dtype=torch.float32, device=device))
-            else:
-                inp_res = torch.tensor(res.astype(float).values, dtype=torch.float32, device=device)
-                inp_state = (s_t.flatten() != 0).int()
-                x_j.append(policy_network(torch.cat((inp_res, inp_state)))[policy_action])
+        s_t, a_t, r_t, s_t_1, term, n_res, res = zip(*batch)
 
-            if term:
-                y_j.append(torch.tensor(r, dtype=torch.float32, device=device))
-            else:
-                policy_action_n_res = find_table(policy_network, n_res, s_t_1, tables)
+        y_j = torch.tensor(r_t, dtype=torch.float32, device=device)
+        x_j = torch.zeros(batch_size, dtype=torch.float32, device=device)
 
-                if policy_action_n_res == -1: # if it rejects
-                    y_j.append(torch.tensor(r, dtype=torch.float32, device=device))
-                else:
-                    inp_n_res = torch.tensor(n_res.astype(float).values, dtype=torch.float32, device=device)
-                    inp_n_state = (s_t_1.flatten() != 0).int()
-                    y_j.append(r + gamma*(target_network(torch.cat((inp_n_res, inp_n_state)))[policy_action_n_res]))
+        inp_res_torch = torch.stack([torch.tensor(r.astype(float).values, dtype=torch.float32, device=device) for r in res])
+        n_res_torch = torch.stack([torch.tensor(r.astype(float).values, dtype=torch.float32, device=device) if not r is None else torch.tensor([-1.0,-1.0,-1.0,-1.0], device=device) for r in n_res])
+
+        inp_state_torch = torch.stack([(s.flatten() != 0).int() for s in s_t])
+        inp_n_state_torch = torch.stack([(s.flatten() != 0).int() for s in s_t_1])
+
+        policy_actions = torch.tensor([find_table(policy_network, r, s, tables) for s, r in zip(s_t, res)], device=device)
+        rejection = policy_actions == -1
+        x_j[~rejection] = policy_network(torch.cat((inp_res_torch, inp_state_torch), dim=1)).gather(1, policy_actions.unsqueeze(1)).flatten()
+
+
+        term_states = torch.tensor([term for _, _, _, _, term, _, _ in batch], device=device)
+        policy_n_actions = torch.tensor([find_table(policy_network, n_r, n_s, tables) if not n_r is None else -1 for n_r, n_s in zip(n_res, s_t_1)], device=device)
+        rejection = policy_n_actions == -1
+        invalid_actions = torch.logical_or(term_states, rejection)
+        y_j[~invalid_actions] += gamma*(target_network(torch.cat((n_res_torch[~invalid_actions], inp_n_state_torch[~invalid_actions]), dim=1)).gather(1, policy_n_actions[~rejection].unsqueeze(1))).flatten()
+
+        # y_j = []
+        # x_j = []
+        # for (s_t, _, r, s_t_1, term, n_res, res) in batch:
+        #     policy_action = find_table(policy_network, res, s_t, tables)
+        #     if policy_action == -1: # rejection
+        #         x_j.append(torch.tensor(0, dtype=torch.float32, device=device))
+        #     else:
+        #         inp_res = torch.tensor(res.astype(float).values, dtype=torch.float32, device=device)
+        #         inp_state = (s_t.flatten() != 0).int()
+        #         x_j.append(policy_network(torch.cat((inp_res, inp_state)))[policy_action])
+
+        #     if term:
+        #         y_j.append(torch.tensor(r, dtype=torch.float32, device=device))
+        #     else:
+        #         policy_action_n_res = find_table(policy_network, n_res, s_t_1, tables)
+
+        #         if policy_action_n_res == -1: # if it rejects
+        #             y_j.append(torch.tensor(r, dtype=torch.float32, device=device))
+        #         else:
+        #             inp_n_res = torch.tensor(n_res.astype(float).values, dtype=torch.float32, device=device)
+        #             inp_n_state = (s_t_1.flatten() != 0).int()
+                    # y_j.append(r + gamma*(target_network(torch.cat((inp_n_res, inp_n_state)))[policy_action_n_res]))
 
         # Update policy network
         criterion = nn.HuberLoss()
-        loss = criterion(torch.stack(x_j).to(device), torch.stack(y_j).to(device))
+        loss = criterion(x_j, y_j)
 
         optimizer.zero_grad()
         loss.backward()

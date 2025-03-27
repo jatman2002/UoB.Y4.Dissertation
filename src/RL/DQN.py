@@ -111,7 +111,7 @@ optimizer = optim.Adam(policy_network.parameters(), lr=1e-4, amsgrad=True)
 epsilon = 0.9
 gamma = 0.9
 C = 10
-batch_size = 5
+batch_size = 32
 
 # Replay Buffer
 memory = ReplayMemory(1000)

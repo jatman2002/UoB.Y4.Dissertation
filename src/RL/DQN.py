@@ -176,7 +176,7 @@ for day in unique_days: # a day is an episode
 
         policy_actions = torch.tensor([find_table(policy_network, r, s, tables) for s, r in zip(s_t, res)], device=device)
         rejection = policy_actions == -1
-        x_j[~rejection] = policy_network(torch.cat((inp_res_torch, inp_state_torch), dim=1)).gather(1, policy_actions.unsqueeze(1)).flatten()
+        x_j[~rejection] = policy_network(torch.cat((inp_res_torch[~rejection], inp_state_torch[~rejection]), dim=1)).gather(1, policy_actions[~rejection].unsqueeze(1)).flatten()
 
 
         term_states = torch.tensor([term for _, _, _, _, term, _, _ in batch], device=device)

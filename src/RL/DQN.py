@@ -110,7 +110,7 @@ epsilon = 0.9
 epsilon_decay = 0.999
 gamma = 0.9
 # C = 1000
-batch_size = 64
+batch_size = 32
 TAU = 0.01
 
 # Replay Buffer

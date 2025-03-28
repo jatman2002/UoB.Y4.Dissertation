@@ -107,15 +107,19 @@ optimizer = optim.Adam(policy_network.parameters(), lr=1e-4, amsgrad=True)
 
 # Extra params
 epsilon = 0.9
+epsilon_decay = 0.999
 gamma = 0.9
-C = 10
+# C = 1000
 batch_size = 64
+TAU = 0.01
 
 # Replay Buffer
 memory = ReplayMemory(10000)
 
 booking_date = pd.to_datetime(train['BookingDate']).dt.date
 unique_days = booking_date.unique()
+
+# total_steps = 0
 
 for day in unique_days: # a day is an episode
     env.reset(device)
@@ -151,9 +155,10 @@ for day in unique_days: # a day is an episode
         memory.push([current_state, action, reward, env.state.detach(), step == len(bookings_on_day)-1, next_res, reservation[features]])
 
         step += 1
+        # total_steps += 1
 
         # Epsilon decay
-        epsilon = max(0.1, 0.9999*epsilon)
+        epsilon = max(0.1, epsilon_decay*epsilon)
 
         if len(memory) < batch_size:
             continue
@@ -193,9 +198,15 @@ for day in unique_days: # a day is an episode
         torch.nn.utils.clip_grad_value_(policy_network.parameters(), 1.0)
         optimizer.step()
 
-        # Update target network every C steps
-        if step % C == 0:
-            target_network.load_state_dict(policy_network.state_dict())
+        # # Update target network every C steps
+        # if total_steps % C == 0:
+        #     target_network.load_state_dict(policy_network.state_dict())
+        # soft update of target network
+        target_net_state_dict = target_network.state_dict()
+        policy_net_state_dict = policy_network.state_dict()
+        for key in policy_net_state_dict:
+            target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
+        target_network.load_state_dict(target_net_state_dict)
 
     print(f"\nDay {day}\tproportional_reward={total_reward/len(bookings_on_day):>5}")
 

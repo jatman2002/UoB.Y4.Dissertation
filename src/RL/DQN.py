@@ -69,7 +69,28 @@ def find_table(predictor, reservation, diary, tables):
 
         return -1
 
+def find_y_j_table(predictor, reservation, diary, tables):
+    
+    res_details = torch.tensor(reservation.astype(float).values, dtype=torch.float32, device=device)
+    state_details = (diary.flatten() != 0).int()
 
+    with torch.no_grad():
+        actions = torch.argsort(predictor(torch.cat((res_details, state_details))), descending=True).tolist()
+        
+        start = int(reservation['BookingStartTime'])
+        end = int(reservation['EndTime'])
+
+        a = actions[0]
+
+        #heavily penalise incorrect tables
+        if tables.iloc[a]['MinCovers'] > reservation['GuestCount']:
+            return -1
+        if tables.iloc[a]['MaxCovers'] < reservation['GuestCount']:
+            return -1
+        if torch.any(diary[a][start:end] != 0).item():
+            return -1
+
+        return a
     
 
 device = torch.device(
@@ -103,15 +124,15 @@ policy_network = DqnNetwork(input_size, output_size).to(device)
 target_network = DqnNetwork(input_size, output_size).to(device)
 target_network.load_state_dict(policy_network.state_dict())
 
-optimizer = optim.Adam(policy_network.parameters(), lr=1e-4, amsgrad=True)
+optimizer = optim.Adam(policy_network.parameters(), lr=1e-2, amsgrad=True)
 
 # Extra params
 epsilon = 0.9
 epsilon_decay = 0.9995
 gamma = 0.9
 # C = 1000
-batch_size = 64
-TAU = 0.01
+batch_size = 256
+TAU = 0.05
 
 # Replay Buffer
 memory = ReplayMemory(10000)
@@ -120,6 +141,10 @@ booking_date = pd.to_datetime(train['BookingDate']).dt.date
 unique_days = booking_date.unique()
 
 # total_steps = 0
+
+actions_taken = {}
+for i in range(1,len(tables)+2):
+    actions_taken[i] = 0
 
 for day in unique_days: # a day is an episode
     env.reset(device)
@@ -145,6 +170,7 @@ for day in unique_days: # a day is an episode
         # Take the action
         action, reward = env.step(actions.tolist(), reservation)
         total_reward += reward
+        actions_taken[action+1] += 1
 
         if step < len(bookings_on_day)-1:
             next_res = bookings_on_day.iloc[step+1][features]
@@ -177,17 +203,19 @@ for day in unique_days: # a day is an episode
         inp_state_torch = torch.stack([(s.flatten() != 0).int() for s in s_t])
         inp_n_state_torch = torch.stack([(s.flatten() != 0).int() for s in s_t_1])
 
-        policy_actions = torch.tensor([find_table(policy_network, r, s, tables) for s, r in zip(s_t, res)], device=device)
+        policy_actions = torch.tensor([find_y_j_table(policy_network, r, s, tables) for s, r in zip(s_t, res)], device=device)
         rejection = policy_actions == -1
         x_j[~rejection] = policy_network(torch.cat((inp_res_torch[~rejection], inp_state_torch[~rejection]), dim=1)).gather(1, policy_actions[~rejection].unsqueeze(1)).flatten()
+        x_j[rejection] = -200
 
-
-        term_states = torch.tensor([term for _, _, _, _, term, _, _ in batch], device=device)
-        policy_n_actions = torch.tensor([find_table(policy_network, n_r, n_s, tables) if not n_r is None else -1 for n_r, n_s in zip(n_res, s_t_1)], device=device)
-        rejection = policy_n_actions == -1
-        invalid_actions = torch.logical_or(term_states, rejection)
-        y_j[~invalid_actions] += gamma*(target_network(torch.cat((n_res_torch[~invalid_actions], inp_n_state_torch[~invalid_actions]), dim=1)).gather(1, policy_n_actions[~rejection].unsqueeze(1))).flatten()
-
+        with torch.no_grad():
+            term_states = torch.tensor([term for _, _, _, _, term, _, _ in batch], device=device)
+            policy_n_actions = torch.tensor([find_y_j_table(policy_network, n_r, n_s, tables) if not n_r is None else -2 for n_r, n_s in zip(n_res, s_t_1)], device=device)
+            rejection = policy_n_actions == -1
+            invalid_actions = torch.logical_or(term_states, rejection)
+            y_j[~invalid_actions] += gamma*(target_network(torch.cat((n_res_torch[~invalid_actions], inp_n_state_torch[~invalid_actions]), dim=1)).gather(1, policy_n_actions[~invalid_actions].unsqueeze(1))).flatten()
+            y_j[rejection] -= 200
+            
         # Update policy network
         criterion = nn.HuberLoss()
         loss = criterion(x_j, y_j)
@@ -208,8 +236,11 @@ for day in unique_days: # a day is an episode
             target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
         target_network.load_state_dict(target_net_state_dict)
 
-    print(f"\nDay {day}\tproportional_reward={total_reward/len(bookings_on_day):>5}")
+    print(f"\nDay {day}\tproportional_reward={total_reward/len(bookings_on_day):>18}\t{epsilon=}")
 
+print()
+print(actions_taken)
+print()
 
 test_data = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-test.csv')
 test_data['BookingStartTime'] = (test_data['BookingStartTime'] - 36000) / (60*15)
@@ -217,4 +248,4 @@ test_data['Duration'] = test_data['Duration'] / (60*15)
 test_data["EndTime"] = test_data["BookingStartTime"] + test_data["Duration"]
 
 print()
-test_predictor(f'Restaurant-{restaurant_name}/DQN1', test_data, tables, policy_network, find_table, device, features)
+test_predictor(f'Restaurant-{restaurant_name}/DQN2', test_data, tables, policy_network, find_table, device, features)

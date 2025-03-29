@@ -236,7 +236,7 @@ for day in unique_days: # a day is an episode
             target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
         target_network.load_state_dict(target_net_state_dict)
 
-    print(f"\nDay {day}\tproportional_reward={total_reward/len(bookings_on_day):>18}\t{epsilon=}")
+    print(f"\nDay {day}\tproportional_reward={total_reward/len(bookings_on_day):<18}\t{epsilon=}")
 
 print()
 print(actions_taken)

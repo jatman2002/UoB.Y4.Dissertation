@@ -132,7 +132,7 @@ epsilon_decay = 0.9995
 gamma = 0.9
 # C = 1000
 batch_size = 256
-TAU = 0.05
+TAU = 0.01
 
 # Replay Buffer
 memory = ReplayMemory(10000)
@@ -223,7 +223,7 @@ for day in unique_days: # a day is an episode
         optimizer.zero_grad()
         loss.backward()
         # In-place gradient clipping
-        torch.nn.utils.clip_grad_value_(policy_network.parameters(), 1.0)
+        # torch.nn.utils.clip_grad_value_(policy_network.parameters(), 1.0)
         optimizer.step()
 
         # # Update target network every C steps
@@ -248,4 +248,4 @@ test_data['Duration'] = test_data['Duration'] / (60*15)
 test_data["EndTime"] = test_data["BookingStartTime"] + test_data["Duration"]
 
 print()
-test_predictor(f'Restaurant-{restaurant_name}/DQN2', test_data, tables, policy_network, find_table, device, features)
+test_predictor(f'Restaurant-{restaurant_name}/DQN3', test_data, tables, policy_network, find_table, device, features)

@@ -23,4 +23,4 @@ restaurant_name = '1'
 # Results.run(restaurant_name, 'MLP3')
 # Results.run(restaurant_name, 'MLP4')
 
-Results.run(1, 'DQN2')
+Results.run(1, 'DQN3')

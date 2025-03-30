@@ -69,29 +69,77 @@ def find_table(predictor, reservation, diary, tables):
 
         return -1
 
-def find_y_j_table(predictor, reservation, diary, tables):
+# def find_y_j_table(predictor, reservation, diary, tables):
     
-    res_details = torch.tensor(reservation.astype(float).values, dtype=torch.float32, device=device)
-    state_details = (diary.flatten() != 0).int()
+#     res_details = torch.tensor(reservation.astype(float).values, dtype=torch.float32, device=device)
+#     state_details = (diary.flatten() != 0).int()
+
+#     with torch.no_grad():
+#         actions = torch.argsort(predictor(torch.cat((res_details, state_details))), descending=True).tolist()
+        
+#         start = int(reservation['BookingStartTime'])
+#         end = int(reservation['EndTime'])
+
+#         a = actions[0]
+
+#         #heavily penalise incorrect tables
+#         if tables.iloc[a]['MinCovers'] > reservation['GuestCount']:
+#             return -1
+#         if tables.iloc[a]['MaxCovers'] < reservation['GuestCount']:
+#             return -1
+#         if torch.any(diary[a][start:end] != 0).item():
+#             return -1
+
+#         return a
+    
+def find_y_j_table(predictor, reservations, diaries, tables):
+    
+    reservations_df = pd.DataFrame(reservations)
+    res_details = torch.tensor(reservations_df.astype(float).values, dtype=torch.float32, device=device)
+
+    diaries_tensor = torch.stack(diaries).to(device)
+    state_details = (diaries_tensor.flatten(start_dim=1) != 0).int()
 
     with torch.no_grad():
-        actions = torch.argsort(predictor(torch.cat((res_details, state_details))), descending=True).tolist()
+        actions = torch.argmax(predictor(torch.cat((res_details, state_details), dim=1)), dim=1)
+
+        guest_counts = torch.tensor(reservations_df['GuestCount'].values, device=device)
+        min_covers = torch.tensor(tables['MinCovers'].values, device=device)
+        max_covers = torch.tensor(tables['MaxCovers'].values, device=device)
+
+        start_times = torch.tensor(reservations_df['BookingStartTime'].astype(int).values, device=device)
+        end_times = torch.tensor(reservations_df['EndTime'].astype(int).values, device=device)
+
+        valid_mask = (min_covers[actions] <= guest_counts) & (max_covers[actions] >= guest_counts)
+
+        # # this is wrong!!!!!!!!!
+        # booking_conflicts = torch.any(diaries_tensor[actions, :,start_times:end_times] != 0, dim=1)
+        booking_conflicts = torch.zeros(len(reservations), dtype=torch.bool, device=device)
+
+        # table_diaries = diaries_tensor.gather(1, actions.view(-1,1,1).expand(-1,1,64))
+        for b in range(len(reservations)):
+            booking_conflicts[b] = torch.any(diaries_tensor[actions[b],0, start_times[b]:end_times[b]] != 0)
+
+        assigned_tables = torch.where(valid_mask & ~booking_conflicts, actions, torch.tensor(-1, device=device))
+    return assigned_tables
+        # actions = torch.argsort(predictor(torch.cat((res_details, state_details))), descending=True).tolist()
         
-        start = int(reservation['BookingStartTime'])
-        end = int(reservation['EndTime'])
+        # start = int(reservation['BookingStartTime'])
+        # end = int(reservation['EndTime'])
 
-        a = actions[0]
+        # a = actions[0]
 
-        #heavily penalise incorrect tables
-        if tables.iloc[a]['MinCovers'] > reservation['GuestCount']:
-            return -1
-        if tables.iloc[a]['MaxCovers'] < reservation['GuestCount']:
-            return -1
-        if torch.any(diary[a][start:end] != 0).item():
-            return -1
+        # #heavily penalise incorrect tables
+        # if tables.iloc[a]['MinCovers'] > reservation['GuestCount']:
+        #     return -1
+        # if tables.iloc[a]['MaxCovers'] < reservation['GuestCount']:
+        #     return -1
+        # if torch.any(diary[a][start:end] != 0).item():
+        #     return -1
 
-        return a
-    
+        # return a
+
+
 
 device = torch.device(
     "cuda:1" if torch.cuda.is_available() else
@@ -207,14 +255,21 @@ for day in unique_days: # a day is an episode
         inp_state_torch = torch.stack([(s.flatten() != 0).int() for s in s_t])
         inp_n_state_torch = torch.stack([(s.flatten() != 0).int() for s in s_t_1])
 
-        policy_actions = torch.tensor([find_y_j_table(policy_network, r, s, tables) for s, r in zip(s_t, res)], device=device)
+        policy_actions = find_y_j_table(policy_network, res, s_t, tables)
         rejection = policy_actions == -1
         x_j[~rejection] = policy_network(torch.cat((inp_res_torch[~rejection], inp_state_torch[~rejection]), dim=1)).gather(1, policy_actions[~rejection].unsqueeze(1)).flatten()
         x_j[rejection] = -200
 
         with torch.no_grad():
-            term_states = torch.tensor([term for _, _, _, _, term, _, _ in batch], device=device)
-            policy_n_actions = torch.tensor([find_y_j_table(policy_network, n_r, n_s, tables) if not n_r is None else -2 for n_r, n_s in zip(n_res, s_t_1)], device=device)
+            term_states = torch.tensor(term, dtype=torch.bool, device=device)
+            # if not n_r is None else -2 for n_r, n_s in zip(n_res, s_t_1)
+            policy_n_actions = torch.zeros(batch_size, dtype=torch.int64, device=device)
+            policy_n_actions -= 2
+
+            filtered_n_res = tuple(n_res[s] for s in range(len(n_res)) if not term[s])
+            filterd_s_t_1 = tuple(s_t_1[s] for s in range(len(s_t_1)) if not term[s])
+
+            policy_n_actions[~term_states] = find_y_j_table(policy_network, filtered_n_res, filterd_s_t_1, tables)
             rejection = policy_n_actions == -1
             invalid_actions = torch.logical_or(term_states, rejection)
             y_j[~invalid_actions] += gamma*(target_network(torch.cat((n_res_torch[~invalid_actions], inp_n_state_torch[~invalid_actions]), dim=1)).gather(1, policy_n_actions[~invalid_actions].unsqueeze(1))).flatten()

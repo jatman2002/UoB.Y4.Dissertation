@@ -142,7 +142,7 @@ def find_y_j_table(predictor, reservations, diaries, tables):
 
 
 device = torch.device(
-    "cuda:1" if torch.cuda.is_available() else
+    "cuda:5" if torch.cuda.is_available() else
     "mps" if torch.backends.mps.is_available() else
     "cpu"
 )

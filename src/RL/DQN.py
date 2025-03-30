@@ -153,6 +153,8 @@ for day in unique_days: # a day is an episode
 
     bookings_on_day = train.loc[booking_date == day]
 
+    training_rejections = 0
+
     for _, reservation in bookings_on_day.iterrows():
 
         print(f"Day {day}\t{step+1:>3}/{len(bookings_on_day):<3}", end="\r")
@@ -171,6 +173,8 @@ for day in unique_days: # a day is an episode
         action, reward = env.step(actions.tolist(), reservation)
         total_reward += reward
         actions_taken[action+1] += 1
+        if action == len(tables):
+            training_rejections += 1
 
         if step < len(bookings_on_day)-1:
             next_res = bookings_on_day.iloc[step+1][features]
@@ -236,7 +240,7 @@ for day in unique_days: # a day is an episode
             target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
         target_network.load_state_dict(target_net_state_dict)
 
-    print(f"\nDay {day}\tproportional_reward={total_reward/len(bookings_on_day):<18}\t{epsilon=}")
+    print(f"\nDay {day}\tproportional_reward={total_reward/len(bookings_on_day):<18}\trejections = {training_rejections}")
 
 print()
 print(actions_taken)

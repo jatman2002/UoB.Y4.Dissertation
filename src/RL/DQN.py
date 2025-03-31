@@ -259,10 +259,12 @@ print()
 print(actions_taken)
 print()
 
-test_data = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-test.csv')
-test_data['BookingStartTime'] = (test_data['BookingStartTime'] - 36000) / (60*15)
-test_data['Duration'] = test_data['Duration'] / (60*15)
-test_data["EndTime"] = test_data["BookingStartTime"] + test_data["Duration"]
+torch.save(policy_network.state_dict(), f'{os.getcwd()}/models/DQN3.pt')
 
-print()
-test_predictor(f'Restaurant-{restaurant_name}/DQN3', test_data, tables, policy_network, find_table, device, features)
+# test_data = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-test.csv')
+# test_data['BookingStartTime'] = (test_data['BookingStartTime'] - 36000) / (60*15)
+# test_data['Duration'] = test_data['Duration'] / (60*15)
+# test_data["EndTime"] = test_data["BookingStartTime"] + test_data["Duration"]
+
+# print()
+# test_predictor(f'Restaurant-{restaurant_name}/DQN3', test_data, tables, policy_network, find_table, device, features)

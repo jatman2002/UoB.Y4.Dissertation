@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import os
 import random
+from collections import deque
 
 from RestaurantEnv import RestaurantEnv
 from Test import test_predictor
@@ -22,23 +23,18 @@ class DqnNetwork(nn.Module):
     def forward(self, x):
         x = F.relu(self.l1(x))
         x = F.relu(self.l2(x))
-        # x = F.relu(self.l3(x))
-        # return self.l4(x)
         return self.l3(x)
 
 class ReplayMemory:
     def __init__(self, buffer_size):
-        self.buffer_size = buffer_size
-        self.buffer = [] # [state_t, action_t, reward_t, state_t+1, is_terminal, res_details]
+        self.buffer = deque(maxlen=buffer_size)  # Handles FIFO automatically
 
     def push(self, e):
-        if len(self.buffer) == self.buffer_size:
-            self.buffer = self.buffer[1:]
         self.buffer.append(e)
 
     def sample(self, batch_size):
         return random.sample(self.buffer, batch_size)
-    
+
     def __len__(self):
         return len(self.buffer)
 
@@ -68,29 +64,6 @@ def find_table(predictor, reservation, diary, tables):
             return a
 
         return -1
-
-# def find_y_j_table(predictor, reservation, diary, tables):
-    
-#     res_details = torch.tensor(reservation.astype(float).values, dtype=torch.float32, device=device)
-#     state_details = (diary.flatten() != 0).int()
-
-#     with torch.no_grad():
-#         actions = torch.argsort(predictor(torch.cat((res_details, state_details))), descending=True).tolist()
-        
-#         start = int(reservation['BookingStartTime'])
-#         end = int(reservation['EndTime'])
-
-#         a = actions[0]
-
-#         #heavily penalise incorrect tables
-#         if tables.iloc[a]['MinCovers'] > reservation['GuestCount']:
-#             return -1
-#         if tables.iloc[a]['MaxCovers'] < reservation['GuestCount']:
-#             return -1
-#         if torch.any(diary[a][start:end] != 0).item():
-#             return -1
-
-#         return a
     
 def find_y_j_table(predictor, reservations, diaries, tables):
     
@@ -112,8 +85,6 @@ def find_y_j_table(predictor, reservations, diaries, tables):
 
         valid_mask = (min_covers[actions] <= guest_counts) & (max_covers[actions] >= guest_counts)
 
-        # # this is wrong!!!!!!!!!
-        # booking_conflicts = torch.any(diaries_tensor[actions, :,start_times:end_times] != 0, dim=1)
         booking_conflicts = torch.zeros(len(reservations), dtype=torch.bool, device=device)
 
         # table_diaries = diaries_tensor.gather(1, actions.view(-1,1,1).expand(-1,1,64))
@@ -122,22 +93,6 @@ def find_y_j_table(predictor, reservations, diaries, tables):
 
         assigned_tables = torch.where(valid_mask & ~booking_conflicts, actions, torch.tensor(-1, device=device))
     return assigned_tables
-        # actions = torch.argsort(predictor(torch.cat((res_details, state_details))), descending=True).tolist()
-        
-        # start = int(reservation['BookingStartTime'])
-        # end = int(reservation['EndTime'])
-
-        # a = actions[0]
-
-        # #heavily penalise incorrect tables
-        # if tables.iloc[a]['MinCovers'] > reservation['GuestCount']:
-        #     return -1
-        # if tables.iloc[a]['MaxCovers'] < reservation['GuestCount']:
-        #     return -1
-        # if torch.any(diary[a][start:end] != 0).item():
-        #     return -1
-
-        # return a
 
 
 
@@ -147,11 +102,12 @@ device = torch.device(
     "cpu"
 )
 
-# print(f'{device=}\t{torch.cuda.current_device()=}')
+print(f'{device=}')
 
 # Load Data
 restaurant_name = 1
 
+print('LOADING DATA')
 tables = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-tables.csv')
 train = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/MLP-Soft-Encoding/Restaurant-{restaurant_name}-train.csv')
 
@@ -163,16 +119,18 @@ train["EndTime"] = train["BookingStartTime"] + train["Duration"]
 features = ['GuestCount', 'BookingStartTime', 'Duration', 'EndTime']
 
 #Create Environment
+print('CREATING ENV')
 env = RestaurantEnv(tables, device)
 
 # Define networks
+print('CREATING NETWORKS')
 input_size = len(features) + len(tables)*64
 output_size = len(tables)
 policy_network = DqnNetwork(input_size, output_size).to(device)
 target_network = DqnNetwork(input_size, output_size).to(device)
 target_network.load_state_dict(policy_network.state_dict())
 
-optimizer = optim.Adam(policy_network.parameters(), lr=1e-2, amsgrad=True)
+optimizer = optim.Adam(policy_network.parameters(), lr=5e-3, amsgrad=True)
 
 # Extra params
 epsilon = 0.9
@@ -183,17 +141,18 @@ batch_size = 256
 TAU = 0.01
 
 # Replay Buffer
+print('CREATING REPLAY MEMORY')
 memory = ReplayMemory(10000)
 
 booking_date = pd.to_datetime(train['BookingDate']).dt.date
 unique_days = booking_date.unique()
 
-# total_steps = 0
-
 actions_taken = {}
 for i in range(1,len(tables)+2):
     actions_taken[i] = 0
 
+
+print('STARTING TRAINING')
 for day in unique_days: # a day is an episode
     env.reset(device)
     total_reward = 0
@@ -207,6 +166,7 @@ for day in unique_days: # a day is an episode
 
         print(f"Day {day}\t{step+1:>3}/{len(bookings_on_day):<3}", end="\r")
         
+        # Get data as tensors for network input
         res_details = torch.tensor(reservation[features].astype(float).values, dtype=torch.float32, device=device)
         current_state = env.state.detach()
         state_details = (current_state.flatten() != 0).int()
@@ -219,11 +179,14 @@ for day in unique_days: # a day is an episode
 
         # Take the action
         action, reward = env.step(actions.tolist(), reservation)
+
+        # extra things to record in logging
         total_reward += reward
         actions_taken[action+1] += 1
         if action == len(tables):
             training_rejections += 1
 
+        # If term state
         if step < len(bookings_on_day)-1:
             next_res = bookings_on_day.iloc[step+1][features]
         else:
@@ -233,7 +196,6 @@ for day in unique_days: # a day is an episode
         memory.push([current_state, action, reward, env.state.detach(), step == len(bookings_on_day)-1, next_res, reservation[features]])
 
         step += 1
-        # total_steps += 1
 
         # Epsilon decay
         epsilon = max(0.1, epsilon_decay*epsilon)
@@ -249,20 +211,22 @@ for day in unique_days: # a day is an episode
         y_j = torch.tensor(r_t, dtype=torch.float32, device=device)
         x_j = torch.zeros(batch_size, dtype=torch.float32, device=device)
 
+        # load stuff as torch
         inp_res_torch = torch.stack([torch.tensor(r.astype(float).values, dtype=torch.float32, device=device) for r in res])
         n_res_torch = torch.stack([torch.tensor(r.astype(float).values, dtype=torch.float32, device=device) if not r is None else torch.tensor([-1.0,-1.0,-1.0,-1.0], device=device) for r in n_res])
 
         inp_state_torch = torch.stack([(s.flatten() != 0).int() for s in s_t])
         inp_n_state_torch = torch.stack([(s.flatten() != 0).int() for s in s_t_1])
 
+        # Get current Q value
         policy_actions = find_y_j_table(policy_network, res, s_t, tables)
         rejection = policy_actions == -1
         x_j[~rejection] = policy_network(torch.cat((inp_res_torch[~rejection], inp_state_torch[~rejection]), dim=1)).gather(1, policy_actions[~rejection].unsqueeze(1)).flatten()
         x_j[rejection] = -200
 
+        # Get target Q value
         with torch.no_grad():
             term_states = torch.tensor(term, dtype=torch.bool, device=device)
-            # if not n_r is None else -2 for n_r, n_s in zip(n_res, s_t_1)
             policy_n_actions = torch.zeros(batch_size, dtype=torch.int64, device=device)
             policy_n_actions -= 2
 
@@ -282,18 +246,12 @@ for day in unique_days: # a day is an episode
         optimizer.zero_grad()
         loss.backward()
         # In-place gradient clipping
-        # torch.nn.utils.clip_grad_value_(policy_network.parameters(), 1.0)
+        torch.nn.utils.clip_grad_value_(policy_network.parameters(), 100.0)
         optimizer.step()
 
-        # # Update target network every C steps
-        # if total_steps % C == 0:
-        #     target_network.load_state_dict(policy_network.state_dict())
-        # soft update of target network
-        target_net_state_dict = target_network.state_dict()
-        policy_net_state_dict = policy_network.state_dict()
-        for key in policy_net_state_dict:
-            target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
-        target_network.load_state_dict(target_net_state_dict)
+        # Soft update of target network
+        for target_param, policy_param in zip(target_network.parameters(), policy_network.parameters()):
+            target_param.data.copy_(TAU * policy_param.data + (1.0 - TAU) * target_param.data)
 
     print(f"\nDay {day}\tproportional_reward={total_reward/len(bookings_on_day):<18}\trejections = {training_rejections}")
 

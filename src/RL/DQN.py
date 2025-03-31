@@ -142,7 +142,7 @@ TAU = 0.01
 
 # Replay Buffer
 print('CREATING REPLAY MEMORY')
-memory = ReplayMemory(10000)
+memory = ReplayMemory(30000)
 
 booking_date = pd.to_datetime(train['BookingDate']).dt.date
 unique_days = booking_date.unique()
@@ -153,7 +153,7 @@ for i in range(1,len(tables)+2):
 
 
 print('STARTING TRAINING')
-for day in unique_days: # a day is an episode
+for day in np.tile(unique_days, 5): # a day is an episode
     env.reset(device)
     total_reward = 0
     step = 0

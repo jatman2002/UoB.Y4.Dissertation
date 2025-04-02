@@ -153,7 +153,7 @@ for i in range(1,len(tables)+2):
 
 
 print('STARTING TRAINING')
-for day in np.tile(unique_days, 5): # a day is an episode
+for day in unique_days: # a day is an episode
     env.reset(device)
     total_reward = 0
     step = 0
@@ -211,6 +211,8 @@ for day in np.tile(unique_days, 5): # a day is an episode
         y_j = torch.tensor(r_t, dtype=torch.float32, device=device)
         x_j = torch.zeros(batch_size, dtype=torch.float32, device=device)
 
+        a_t_torch = torch.tensor(a_t, device=device)
+
         # load stuff as torch
         inp_res_torch = torch.stack([torch.tensor(r.astype(float).values, dtype=torch.float32, device=device) for r in res])
         n_res_torch = torch.stack([torch.tensor(r.astype(float).values, dtype=torch.float32, device=device) if not r is None else torch.tensor([-1.0,-1.0,-1.0,-1.0], device=device) for r in n_res])
@@ -219,9 +221,8 @@ for day in np.tile(unique_days, 5): # a day is an episode
         inp_n_state_torch = torch.stack([(s.flatten() != 0).int() for s in s_t_1])
 
         # Get current Q value
-        policy_actions = find_y_j_table(policy_network, res, s_t, tables)
-        rejection = policy_actions == -1
-        x_j[~rejection] = policy_network(torch.cat((inp_res_torch[~rejection], inp_state_torch[~rejection]), dim=1)).gather(1, policy_actions[~rejection].unsqueeze(1)).flatten()
+        rejection = a_t_torch == len(tables)
+        x_j[~rejection] = policy_network(torch.cat((inp_res_torch[~rejection], inp_state_torch[~rejection]), dim=1)).gather(1, a_t_torch[~rejection].unsqueeze(1)).flatten()
         x_j[rejection] = -200
 
         # Get target Q value

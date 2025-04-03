@@ -18,9 +18,10 @@ restaurant_name = '1'
 # MLP3.run(restaurant_name)
 # MLP4.run(restaurant_name)
 
-# Results.run(restaurant_name, 'MLP1')
+Results.run(restaurant_name, 'MLP1')
 # Results.run(restaurant_name, 'MLP2')
 # Results.run(restaurant_name, 'MLP3')
 # Results.run(restaurant_name, 'MLP4')
 
-Results.run(1, 'DQN3')
+Results.run(1, 'DQN')
+Results.run(1, 'Existing')

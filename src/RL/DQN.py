@@ -266,7 +266,8 @@ print(actions_taken)
 print()
 
 torch.save(policy_network.state_dict(), f'{os.getcwd()}/models/DQN.pt')
-pickle.dump(trajectories, f'{os.getcwd()}/models/DQN.pkl')
+with open(f'{os.getcwd()}/models/DQN.pkl', 'wb') as f:
+    pickle.dump(trajectories, f)
 
 test_data = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-test.csv')
 test_data['BookingStartTime'] = (test_data['BookingStartTime'] - 36000) / (60*15)

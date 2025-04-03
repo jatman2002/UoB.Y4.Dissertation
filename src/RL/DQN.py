@@ -131,7 +131,7 @@ policy_network = DqnNetwork(input_size, output_size).to(device)
 target_network = DqnNetwork(input_size, output_size).to(device)
 target_network.load_state_dict(policy_network.state_dict())
 
-optimizer = optim.Adam(policy_network.parameters(), lr=5e-3, amsgrad=True)
+optimizer = optim.Adam(policy_network.parameters(), lr=1e-3, amsgrad=True)
 
 # Extra params
 epsilon = 0.9

@@ -134,12 +134,12 @@ print('CREATING NETWORKS')
 input_size = len(features) + len(tables)*64
 output_size = len(tables)
 
-actor_old = PolicyNetwork(input_size, output_size)
-actor = PolicyNetwork(input_size, output_size)
+actor_old = PolicyNetwork(input_size, output_size).to(device)
+actor = PolicyNetwork(input_size, output_size).to(device)
 actor.load_state_dict(actor_old.state_dict())
 
-critic_old = ValueNetwork(input_size)
-critic = ValueNetwork(input_size)
+critic_old = ValueNetwork(input_size).to(device)
+critic = ValueNetwork(input_size).to(device)
 critic.load_state_dict(critic_old.state_dict())
 
 optimizer_actor = optim.Adam(actor.parameters(), lr=1e-3, amsgrad=True)

@@ -5,65 +5,50 @@ class RestaurantEnv:
         self.tables = tables
         self.state = torch.zeros((len(tables), 64), dtype=torch.float32, device=device)
 
-        self.incorrect_table_penalty = -1000
+        self.incorrect_table_penalty = -200
+        self.wrong_table_size = -25
+        self.table_is_full = -10
 
         self.reset(device)
 
     def reset(self, device):
         self.state = torch.zeros((len(self.tables), 64), dtype=torch.int, device=device)
 
-    def step(self, action_prob, reservation):
-
-        if torch.argmax(action_prob).item() == len(self.tables):
-            return len(self.tables), self.incorrect_table_penalty
-
-        order_of_tables = torch.argsort(action_prob[:len(self.tables)], descending=True)
-
-        t = 1
+    def step(self, action_list, reservation):
 
         start = int(reservation['BookingStartTime'])
         end = int(reservation['EndTime'])
 
-        for action_tensor in order_of_tables:
-        
-            action = action_tensor.item()
+        reward = 0
+
+        for a in range(len(action_list)):
+            action = action_list[a]
 
             #heavily penalise incorrect tables
             if self.tables.iloc[action]['MinCovers'] > reservation['GuestCount']:
-                t+=1
+                reward += self.wrong_table_size
                 continue
             if self.tables.iloc[action]['MaxCovers'] < reservation['GuestCount']:
-                t+=1
+                reward +=  self.wrong_table_size
                 continue
             if torch.any(self.state[action][start:end] != 0).item():
-                t+=1
+                reward +=  self.table_is_full
                 continue
             
             self.state[action, start:end] = reservation['BookingCode']
+            return action, (300 - self.get_wasted_slots(action) + reward)
 
-            return action, (100 - self.get_wasted_slots()) / t
-        
         return len(self.tables), self.incorrect_table_penalty
 
-    def get_wasted_slots(diary):
+    def get_wasted_slots(self, action):
         min_booking_length = 6
         total_wasted_slots = 0
-        wasted_count = 0
-        for table in diary:
-            empty_slots = 0
-            for slot in table:
-                # if slot == 0:
-                #     wasted_slots += 1
-                # else:
-                #     total_wasted_slots += wasted_slots % min_booking_length
-                #     wasted_count += 1
-                #     wasted_slots = 0
-
-                if slot != 0:
-                    if empty_slots < min_booking_length and empty_slots > 0:
-                        wasted_count += 1
-                    empty_slots = 0
-                    continue
-                empty_slots += 1
-
-        return wasted_count
+        wasted_slots = 0
+        for slot in self.state[action]:
+            if slot == 0:
+                wasted_slots += 1
+            else:
+                total_wasted_slots += wasted_slots % min_booking_length
+                wasted_slots = 0
+        total_wasted_slots += wasted_slots % min_booking_length
+        return total_wasted_slots

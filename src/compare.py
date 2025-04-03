@@ -2,11 +2,11 @@ import pandas as pd
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy.stats as stats
+from pathlib import Path
 
 def plot_wasted(df, name, color):
     new_df = df.sort_values(by='ReservationCount')
-    z = np.polyfit(new_df['ReservationCount'],new_df['WastedCount'],2)
+    z = np.polyfit(new_df['ReservationCount'],new_df['WastedCount'],1)
     p = np.poly1d(z)
 
     plt.plot(np.arange(0,80), p(np.arange(0,80)), label=name, color=color)
@@ -15,7 +15,7 @@ def plot_wasted(df, name, color):
 
 def plot_rejections(df, name, color):
     new_df = df.sort_values(by='ReservationCount')
-    z = np.polyfit(new_df['ReservationCount'],new_df['Rejections'],2)
+    z = np.polyfit(new_df['ReservationCount'],new_df['Rejections'],1)
     p = np.poly1d(z)
 
     plt.plot(np.arange(0,80), p(np.arange(0,80)), label=name, color=color)
@@ -66,4 +66,7 @@ ax_1.set_xlim(left=0)
 # p = stats.norm.pdf(x, mean, std)
 # ax_2.plot(x, p, color='red')
 
-plt.show()
+file_p = f'{os.getcwd()}/Img/'
+Path(f'{file_p}').mkdir(parents=True, exist_ok=True)
+
+plt.savefig(f'{file_p}MLP-comparison-.pdf', bbox_inches='tight')

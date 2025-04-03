@@ -13,7 +13,7 @@ import helper.Results as Results
 restaurant_name = '1'
 
 
-# MLP1.run(restaurant_name)
+MLP1.run(restaurant_name)
 # MLP2.run(restaurant_name)
 # MLP3.run(restaurant_name)
 # MLP4.run(restaurant_name)

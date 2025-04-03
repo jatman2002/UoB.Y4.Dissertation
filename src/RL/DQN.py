@@ -8,6 +8,7 @@ import numpy as np
 import os
 import random
 from collections import deque
+import pickle
 
 from RestaurantEnv import RestaurantEnv
 from Test import test_predictor
@@ -151,6 +152,8 @@ actions_taken = {}
 for i in range(1,len(tables)+2):
     actions_taken[i] = 0
 
+trajectories = {}
+
 
 print('STARTING TRAINING')
 for day in unique_days: # a day is an episode
@@ -161,6 +164,7 @@ for day in unique_days: # a day is an episode
     bookings_on_day = train.loc[booking_date == day]
 
     training_rejections = 0
+    trajectories[day] = []
 
     for _, reservation in bookings_on_day.iterrows():
 
@@ -185,6 +189,7 @@ for day in unique_days: # a day is an episode
         actions_taken[action+1] += 1
         if action == len(tables):
             training_rejections += 1
+        trajectories[day].append(reward)
 
         # If term state
         if step < len(bookings_on_day)-1:
@@ -260,7 +265,8 @@ print()
 print(actions_taken)
 print()
 
-torch.save(policy_network.state_dict(), f'{os.getcwd()}/models/DQN3.pt')
+torch.save(policy_network.state_dict(), f'{os.getcwd()}/models/DQN.pt')
+pickle.dump(trajectories, f'{os.getcwd()}/models/DQN.pkl')
 
 test_data = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-test.csv')
 test_data['BookingStartTime'] = (test_data['BookingStartTime'] - 36000) / (60*15)
@@ -268,4 +274,4 @@ test_data['Duration'] = test_data['Duration'] / (60*15)
 test_data["EndTime"] = test_data["BookingStartTime"] + test_data["Duration"]
 
 print()
-test_predictor(f'Restaurant-{restaurant_name}/DQN3', test_data, tables, policy_network, find_table, device, features)
+test_predictor(f'Restaurant-{restaurant_name}/DQN', test_data, tables, policy_network, find_table, device, features)

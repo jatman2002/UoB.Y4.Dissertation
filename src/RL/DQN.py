@@ -72,10 +72,10 @@ def find_y_j_table(predictor, reservations, diaries, tables):
     res_details = torch.tensor(reservations_df.astype(float).values, dtype=torch.float32, device=device)
 
     diaries_tensor = torch.stack(diaries).to(device)
-    state_details = (diaries_tensor.flatten(start_dim=1) != 0).int()
+    state_details = (diaries_tensor.flatten(start_dim=1) != 0).to(device).int()
 
     with torch.no_grad():
-        actions = torch.argmax(predictor(torch.cat((res_details, state_details), dim=1)), dim=1)
+        actions = torch.argmax(predictor(torch.cat((res_details, state_details), dim=1)).to(device), dim=1).to(device)
 
         guest_counts = torch.tensor(reservations_df['GuestCount'].values, device=device)
         min_covers = torch.tensor(tables['MinCovers'].values, device=device)
@@ -84,15 +84,15 @@ def find_y_j_table(predictor, reservations, diaries, tables):
         start_times = torch.tensor(reservations_df['BookingStartTime'].astype(int).values, device=device)
         end_times = torch.tensor(reservations_df['EndTime'].astype(int).values, device=device)
 
-        valid_mask = (min_covers[actions] <= guest_counts) & (max_covers[actions] >= guest_counts)
+        valid_mask = (min_covers[actions] <= guest_counts) & (max_covers[actions] >= guest_counts).to(device)
 
         booking_conflicts = torch.zeros(len(reservations), dtype=torch.bool, device=device)
 
         # table_diaries = diaries_tensor.gather(1, actions.view(-1,1,1).expand(-1,1,64))
         for b in range(len(reservations)):
-            booking_conflicts[b] = torch.any(diaries_tensor[actions[b],0, start_times[b]:end_times[b]] != 0)
+            booking_conflicts[b] = torch.any(diaries_tensor[actions[b],0, start_times[b]:end_times[b]] != 0).to(device)
 
-        assigned_tables = torch.where(valid_mask & ~booking_conflicts, actions, torch.tensor(-1, device=device))
+        assigned_tables = torch.where(valid_mask & ~booking_conflicts, actions, torch.tensor(-1, device=device)).to(device)
     return assigned_tables
 
 
@@ -173,13 +173,13 @@ for day in unique_days: # a day is an episode
         # Get data as tensors for network input
         res_details = torch.tensor(reservation[features].astype(float).values, dtype=torch.float32, device=device)
         current_state = env.state.detach()
-        state_details = (current_state.flatten() != 0).int()
+        state_details = (current_state.flatten() != 0).to(device).int()
 
         # Explore vs Exploit
         if np.random.rand() < epsilon:
             actions = torch.randperm(len(tables)).to(device)
         else:
-            actions = torch.argsort(policy_network(torch.cat((res_details, state_details))), descending=True)
+            actions = torch.argsort(policy_network(torch.cat((res_details, state_details))), descending=True).to(device)
 
         # Take the action
         action, reward = env.step(actions.tolist(), reservation)
@@ -219,11 +219,11 @@ for day in unique_days: # a day is an episode
         a_t_torch = torch.tensor(a_t, device=device)
 
         # load stuff as torch
-        inp_res_torch = torch.stack([torch.tensor(r.astype(float).values, dtype=torch.float32, device=device) for r in res])
-        n_res_torch = torch.stack([torch.tensor(r.astype(float).values, dtype=torch.float32, device=device) if not r is None else torch.tensor([-1.0,-1.0,-1.0,-1.0], device=device) for r in n_res])
+        inp_res_torch = torch.stack([torch.tensor(r.astype(float).values, dtype=torch.float32, device=device) for r in res]).to(device)
+        n_res_torch = torch.stack([torch.tensor(r.astype(float).values, dtype=torch.float32, device=device) if not r is None else torch.tensor([-1.0,-1.0,-1.0,-1.0], device=device) for r in n_res]).to(device)
 
-        inp_state_torch = torch.stack([(s.flatten() != 0).int() for s in s_t])
-        inp_n_state_torch = torch.stack([(s.flatten() != 0).int() for s in s_t_1])
+        inp_state_torch = torch.stack([(s.flatten() != 0).int() for s in s_t]).to(device)
+        inp_n_state_torch = torch.stack([(s.flatten() != 0).int() for s in s_t_1]).to(device)
 
         # Get current Q value
         rejection = a_t_torch == len(tables)
@@ -241,7 +241,7 @@ for day in unique_days: # a day is an episode
 
             policy_n_actions[~term_states] = find_y_j_table(policy_network, filtered_n_res, filterd_s_t_1, tables)
             rejection = policy_n_actions == -1
-            invalid_actions = torch.logical_or(term_states, rejection)
+            invalid_actions = torch.logical_or(term_states, rejection).to(device)
             y_j[~invalid_actions] += gamma*(target_network(torch.cat((n_res_torch[~invalid_actions], inp_n_state_torch[~invalid_actions]), dim=1)).gather(1, policy_n_actions[~invalid_actions].unsqueeze(1))).flatten()
             y_j[rejection] -= 200
             

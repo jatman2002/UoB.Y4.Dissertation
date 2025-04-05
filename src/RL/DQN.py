@@ -39,10 +39,10 @@ class ReplayMemory:
         return len(self.buffer)
     
 class DQN:
-    def __init__(self, restaurant_name):
+    def __init__(self, restaurant_name, gpu=0):
         self.restaurant_name = restaurant_name
 
-        self.device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(f"cuda:{gpu}" if torch.cuda.is_available() else "cpu")
 
         # Extra params
         self.epsilon = 0.9

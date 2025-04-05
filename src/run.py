@@ -23,6 +23,8 @@ class LoggerWriter:
     def flush(self):
         pass
 
+print('starting!')
+
 sys.stdout = LoggerWriter()
 
 PPO(1).run()

@@ -9,3 +9,4 @@ models/
 *-test.csv
 *-train.csv
 *.pdf
+*.log

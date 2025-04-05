@@ -10,7 +10,7 @@ import random
 from collections import deque
 import pickle
 
-from RestaurantEnv import RestaurantEnv
+from .RestaurantEnv import RestaurantEnv
 
 class DqnNetwork(nn.Module):
     def __init__(self, input_size, output_size):
@@ -40,6 +40,7 @@ class ReplayMemory:
     
 class DQN:
     def __init__(self, restaurant_name, gpu=0):
+        print('-'*5, 'DQN', '-'*5)
         self.restaurant_name = restaurant_name
 
         self.device = torch.device(f"cuda:{gpu}" if torch.cuda.is_available() else "cpu")
@@ -192,7 +193,7 @@ class DQN:
 
             for _, reservation in bookings_on_day.iterrows():
 
-                print(f"Day {day}\t{step+1:>3}/{len(bookings_on_day):<3}", end="\r")
+                print_string = f"Day {day}\t{step+1:>3}/{len(bookings_on_day):<3}",
                 
                 # Get data as tensors for network input
                 res_details = torch.tensor(reservation[self.features].astype(float).values, dtype=torch.float32, device=self.device)
@@ -215,6 +216,8 @@ class DQN:
                     training_rejections += 1
                 trajectories[day].append(reward)
 
+                print(f'{print_string}\treward - {reward}')
+
                 # If term state
                 if step < len(bookings_on_day)-1:
                     next_res = bookings_on_day.iloc[step+1][self.features]
@@ -235,7 +238,7 @@ class DQN:
                 # replay sampling
                 self.update_networks()
                 
-            print(f"\nDay {day}\tproportional_reward={total_reward/len(bookings_on_day):<18}\trejections = {training_rejections}")
+            print(f"Day {day}\tproportional_reward={total_reward/len(bookings_on_day):<18}\trejections = {training_rejections}")
 
         print()
         print(actions_taken)

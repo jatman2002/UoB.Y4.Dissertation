@@ -7,7 +7,7 @@ import pandas as pd
 import os
 import pickle
 
-from RestaurantEnv import RestaurantEnv
+from .RestaurantEnv import RestaurantEnv
 
 # DEFINE NETWORKS
 class PolicyNetwork(nn.Module):
@@ -59,6 +59,7 @@ class EpisodeMemory:
 class PPO:
 
     def __init__(self, restaurant_name, gpu=0):
+        print('---------- PPO ----------')
         self.gamma = 0.99
         self.epsilon = 0.2
         self.update_iter = 5
@@ -163,7 +164,7 @@ class PPO:
 
             # COLLECT TRAJECTORIES
             for _, reservation in bookings_on_day.iterrows():
-                print(f"Day {day}\t{step+1:>3}/{len(bookings_on_day):<3}", end="\r")
+                print_string = f"Day {day}\t{step+1:>3}/{len(bookings_on_day):<3}"
 
                 # Get data as tensors for network input
                 res_details = torch.tensor(reservation[self.features].astype(float).values, dtype=torch.float32, device=self.device)
@@ -183,6 +184,8 @@ class PPO:
                     training_rejections += 1
                 trajectories[day].append(reward)
 
+                print(f'{print_string}\treward - {reward}')
+
                 if step < len(bookings_on_day)-1:
                     next_res = bookings_on_day.iloc[step+1][self.features]
                 else:
@@ -191,9 +194,8 @@ class PPO:
                 memory.push(step, current_state, action_probs, reward, self.env.state.detach(), value, res_details, next_res)
                 step += 1
 
-            print(f"\nDay {day}\tproportional_reward={total_reward/len(bookings_on_day):<18}\trejections = {training_rejections}")
+            print(f"Day {day}\tproportional_reward={total_reward/len(bookings_on_day):<18}\trejections = {training_rejections}")
 
-            
             self.update_networks(memory, len(bookings_on_day))
 
 

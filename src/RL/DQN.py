@@ -252,5 +252,3 @@ class DQN:
 
 # print()
 # test_predictor(f'Restaurant-{restaurant_name}/DQN', test_data, tables, policy_network, find_table, device, features)
-
-DQN(1).run()

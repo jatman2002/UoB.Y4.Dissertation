@@ -8,7 +8,6 @@ import os
 import pickle
 
 from RestaurantEnv import RestaurantEnv
-from Test import test_predictor
 
 # DEFINE NETWORKS
 class PolicyNetwork(nn.Module):
@@ -34,13 +33,11 @@ class ValueNetwork(nn.Module):
         x = F.relu(self.l1(x))
         x = F.relu(self.l2(x))
         return self.l3(x)
-    
-#---------------------------------------
 
 # DEFINE THE EPISODIC MEMORY
     
 class EpisodeMemory:
-    def __init__(self, episode_length, num_tables):
+    def __init__(self, episode_length, num_tables, features, device):
         self.states = torch.empty((episode_length, num_tables, 64)).to(device)
         self.actions = torch.empty((episode_length, num_tables)).to(device)
         self.rewards = torch.zeros(episode_length).to(device)
@@ -58,183 +55,156 @@ class EpisodeMemory:
         self.res[idx] = res
         self.next_res[idx] = next_res
 
-#---------------------------------------
 
-def find_table(predictor, reservation, diary, tables):
+class PPO:
+
+    def __init__(self, restaurant_name):
+        self.gamma = 0.99
+        self.epsilon = 0.2
+        self.update_iter = 5
+        self.lam = 0.95
+
+        self.device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+        self.restaurant_name = restaurant_name
+
+        print('LOADING DATA')
+        self.train, self.tables, self.features = self.load_data()
+
+        print('CREATING ENV')
+        self.env = RestaurantEnv(self.tables, self.device)
+
+        # Define networks
+        print('CREATING NETWORKS')
+        input_size = len(self.features) + len(self.tables)*64
+        output_size = len(self.tables)
+
+        self.actor_old = PolicyNetwork(input_size, output_size).to(self.device)
+        self.actor = PolicyNetwork(input_size, output_size).to(self.device)
+        self.actor.load_state_dict(self.actor_old.state_dict())
+
+        self.critic_old = ValueNetwork(input_size).to(self.device)
+        self.critic = ValueNetwork(input_size).to(self.device)
+        self.critic.load_state_dict(self.critic_old.state_dict())
+
+        self.optimizer_actor = optim.Adam(self.actor.parameters(), lr=1e-3, amsgrad=True)
+        self.optimizer_critic = optim.Adam(self.critic.parameters(), lr=1e-3, amsgrad=True)
+
+    def get_advantages(self, rewards, values):
+        advantages = torch.zeros(len(rewards)).to(self.device)
+        last_advantage = rewards[-1]
+        advantages[-1] = rewards[-1]
+        for t in reversed(range(len(rewards)-1)):
+            delta = rewards[t] + self.gamma * values[t+1] - values[t]
+            advantage = delta + self.gamma * self.lam * last_advantage
+            advantages[t] = advantage
+            last_advantage = advantage  
+
+        return advantages
+
+    def load_data(self):
+        print('LOADING DATA')
+        tables = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{self.restaurant_name}-tables.csv')
+        train = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/MLP-Soft-Encoding/Restaurant-{self.restaurant_name}-train.csv')
+
+        # Adjust some features
+        train['BookingStartTime'] = (train['BookingStartTime'] - 36000) / (60*15)
+        train['Duration'] = train['Duration'] / (60*15)
+        train["EndTime"] = train["BookingStartTime"] + train["Duration"]
+
+        features = ['GuestCount', 'BookingStartTime', 'Duration', 'EndTime']
+
+        return train, tables, features
     
-    res_details = torch.tensor(reservation.astype(float).values, dtype=torch.float32, device=device)
-    state_details = (diary.flatten() != 0).int()
+    def update_networks(self, memory, num_bookings):
+        # UPDATE AT END OF EPISODE
+        returns = memory.rewards + self.gamma * memory.values
+        inpt = torch.cat((memory.res, (memory.states.flatten(start_dim=1) != 0).int()), dim=1).to(self.device)
+        old_policy_prob = memory.actions
+        for i in range(self.update_iter):
+            new_policy_prob = self.actor(inpt).to(self.device)
+            ratio = (new_policy_prob / old_policy_prob).to(self.device)
+            clamped = torch.clamp(ratio, 1-self.epsilon, 1+self.epsilon).to(self.device)
+            advantages = self.get_advantages(memory.rewards, memory.values)
+            policy_loss = (-torch.min(ratio, clamped) * advantages.reshape((num_bookings, 1))).to(self.device).mean()
 
-    with torch.no_grad():
-        actions = torch.argsort(predictor(torch.cat((res_details, state_details))), descending=True).tolist()
-
-        for a_i in range(len(actions)):
-        
-            start = int(reservation['BookingStartTime'])
-            end = int(reservation['EndTime'])
-
-            a = actions[a_i]
-
-            #heavily penalise incorrect tables
-            if tables.iloc[a]['MinCovers'] > reservation['GuestCount']:
-                continue
-            if tables.iloc[a]['MaxCovers'] < reservation['GuestCount']:
-                continue
-            if torch.any(diary[a][start:end] != 0).item():
-                continue
+            self.optimizer_actor.zero_grad()
+            policy_loss.backward(retain_graph=True)
+            self.optimizer_actor.step()
             
-            return a
+            value_loss_f = nn.MSELoss()
+            critic_pred = self.critic(inpt.detach()).view_as(returns)
+            value_loss = value_loss_f(critic_pred, returns.detach())
 
-        return -1
+            self.optimizer_critic.zero_grad()
+            value_loss.backward()
+            self.optimizer_critic.step()
 
-#---------------------------------------
+        self.actor_old.load_state_dict(self.actor.state_dict())
+        self.critic_old.load_state_dict(self.critic.state_dict())
 
-def get_advantages(rewards, values):
-    advantages = torch.zeros(len(rewards)).to(device)
-    last_advantage = rewards[-1]
-    advantages[-1] = rewards[-1]
-    for t in reversed(range(len(rewards)-1)):
-        delta = rewards[t] + gamma * values[t+1] - values[t]
-        advantage = delta + gamma * lam * last_advantage
-        advantages[t] = advantage
-        last_advantage = advantage  
+    def run(self):
 
-    return advantages
+        booking_date = pd.to_datetime(self.train['BookingDate']).dt.date
+        unique_days = booking_date.unique()
 
-#---------------------------------------
+        trajectories = {}
 
-device = torch.device(
-    "cuda:3" if torch.cuda.is_available() else
-    "mps" if torch.backends.mps.is_available() else
-    "cpu"
-)
+        print('STARTING TRAINING')
+        for day in unique_days: # a day is an episode
+            self.env.reset(self.device)
+            total_reward = 0
+            step = 0
 
-print(f'{device=}')
+            bookings_on_day = self.train.loc[booking_date == day]
+            memory = EpisodeMemory(len(bookings_on_day), len(self.tables), self.features, self.device)
 
-# Load Data
-restaurant_name = 1
+            training_rejections = 0
+            trajectories[day] = []
 
-print('LOADING DATA')
-tables = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-tables.csv')
-train = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/MLP-Soft-Encoding/Restaurant-{restaurant_name}-train.csv')
+            # COLLECT TRAJECTORIES
+            for _, reservation in bookings_on_day.iterrows():
+                print(f"Day {day}\t{step+1:>3}/{len(bookings_on_day):<3}", end="\r")
 
-# Adjust some features
-train['BookingStartTime'] = (train['BookingStartTime'] - 36000) / (60*15)
-train['Duration'] = train['Duration'] / (60*15)
-train["EndTime"] = train["BookingStartTime"] + train["Duration"]
+                # Get data as tensors for network input
+                res_details = torch.tensor(reservation[self.features].astype(float).values, dtype=torch.float32, device=self.device)
+                current_state = self.env.state.detach()
+                state_details = (current_state.flatten() != 0).to(self.device).int()
 
-features = ['GuestCount', 'BookingStartTime', 'Duration', 'EndTime']
+                network_input = torch.cat((res_details, state_details)).to(self.device)
 
-#Create Environment
-print('CREATING ENV')
-env = RestaurantEnv(tables, device)
+                action_probs = self.actor_old(network_input).to(self.device)
+                value = self.critic_old(network_input)
 
-# Define networks
-print('CREATING NETWORKS')
-input_size = len(features) + len(tables)*64
-output_size = len(tables)
+                sorted_action_probs = torch.argsort(action_probs, descending=True).tolist()
+                action, reward = self.env.step(sorted_action_probs, reservation)
 
-actor_old = PolicyNetwork(input_size, output_size).to(device)
-actor = PolicyNetwork(input_size, output_size).to(device)
-actor.load_state_dict(actor_old.state_dict())
+                total_reward += reward
+                if action == len(self.tables):
+                    training_rejections += 1
+                trajectories[day].append(reward)
 
-critic_old = ValueNetwork(input_size).to(device)
-critic = ValueNetwork(input_size).to(device)
-critic.load_state_dict(critic_old.state_dict())
+                if step < len(bookings_on_day)-1:
+                    next_res = bookings_on_day.iloc[step+1][self.features]
+                else:
+                    next_res = None
 
-optimizer_actor = optim.Adam(actor.parameters(), lr=1e-3, amsgrad=True)
-optimizer_critic = optim.Adam(critic.parameters(), lr=1e-3, amsgrad=True)
+                memory.push(step, current_state, action_probs, reward, self.env.state.detach(), value, res_details, next_res)
+                step += 1
 
-gamma = 0.99
-epsilon = 0.2
-update_iter = 5
-lam = 0.95
+            print(f"\nDay {day}\tproportional_reward={total_reward/len(bookings_on_day):<18}\trejections = {training_rejections}")
 
-booking_date = pd.to_datetime(train['BookingDate']).dt.date
-unique_days = booking_date.unique()
-
-trajectories = {}
-
-print('STARTING TRAINING')
-for day in unique_days: # a day is an episode
-    env.reset(device)
-    total_reward = 0
-    step = 0
-
-    bookings_on_day = train.loc[booking_date == day]
-    memory = EpisodeMemory(len(bookings_on_day), len(tables))
-
-    training_rejections = 0
-    trajectories[day] = []
-
-    # COLLECT TRAJECTORIES
-    for _, reservation in bookings_on_day.iterrows():
-        print(f"Day {day}\t{step+1:>3}/{len(bookings_on_day):<3}", end="\r")
-
-        # Get data as tensors for network input
-        res_details = torch.tensor(reservation[features].astype(float).values, dtype=torch.float32, device=device)
-        current_state = env.state.detach()
-        state_details = (current_state.flatten() != 0).to(device).int()
-
-        network_input = torch.cat((res_details, state_details)).to(device)
-
-        action_probs = actor_old(network_input).to(device)
-        value = critic_old(network_input)
-
-        sorted_action_probs = torch.argsort(action_probs, descending=True).tolist()
-        action, reward = env.step(sorted_action_probs, reservation)
-
-        total_reward += reward
-        if action == len(tables):
-            training_rejections += 1
-        trajectories[day].append(reward)
-
-        if step < len(bookings_on_day)-1:
-            next_res = bookings_on_day.iloc[step+1][features]
-        else:
-            next_res = None
-
-        memory.push(step, current_state, action_probs, reward, env.state.detach(), value, res_details, next_res)
-        step += 1
-
-    print(f"\nDay {day}\tproportional_reward={total_reward/len(bookings_on_day):<18}\trejections = {training_rejections}")
-
-    # UPDATE AT END OF EPISODE
-    returns = memory.rewards + gamma * memory.values
-    inpt = torch.cat((memory.res, (memory.states.flatten(start_dim=1) != 0).int()), dim=1).to(device)
-    old_policy_prob = memory.actions
-    for i in range(update_iter):
-        new_policy_prob = actor(inpt).to(device)
-        ratio = (new_policy_prob / old_policy_prob).to(device)
-        clamped = torch.clamp(ratio, 1-epsilon, 1+epsilon).to(device)
-        advantages = get_advantages(memory.rewards, memory.values)
-        policy_loss = (-torch.min(ratio, clamped) * advantages.reshape((len(bookings_on_day), 1))).to(device).mean()
-
-        optimizer_actor.zero_grad()
-        policy_loss.backward(retain_graph=True)
-        optimizer_actor.step()
-        
-        value_loss_f = nn.MSELoss()
-        critic_pred = critic(inpt.detach()).view_as(returns)
-        value_loss = value_loss_f(critic_pred, returns.detach())
-
-        optimizer_critic.zero_grad()
-        value_loss.backward()
-        optimizer_critic.step()
-
-    actor_old.load_state_dict(actor.state_dict())
-    critic_old.load_state_dict(critic.state_dict())
+            
+            self.update_networks(memory, len(bookings_on_day))
 
 
+        torch.save(self.actor.state_dict(), f'{os.getcwd()}/models/PPO-Actor-R-{self.restaurant_name}.pt')
+        with open(f'{os.getcwd()}/models/PPO-R-{self.restaurant_name}.pkl', 'wb') as f:
+            pickle.dump(trajectories, f)
 
-torch.save(actor.state_dict(), f'{os.getcwd()}/models/PPO-Actor.pt')
-with open(f'{os.getcwd()}/models/DQN.pkl', 'wb') as f:
-    pickle.dump(trajectories, f)
+# test_data = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-test.csv')
+# test_data['BookingStartTime'] = (test_data['BookingStartTime'] - 36000) / (60*15)
+# test_data['Duration'] = test_data['Duration'] / (60*15)
+# test_data["EndTime"] = test_data["BookingStartTime"] + test_data["Duration"]
 
-test_data = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{restaurant_name}-test.csv')
-test_data['BookingStartTime'] = (test_data['BookingStartTime'] - 36000) / (60*15)
-test_data['Duration'] = test_data['Duration'] / (60*15)
-test_data["EndTime"] = test_data["BookingStartTime"] + test_data["Duration"]
-
-print()
-test_predictor(f'Restaurant-{restaurant_name}/DQN', test_data, tables, actor, find_table, device, features)
+# print()
+# test_predictor(f'Restaurant-{restaurant_name}/DQN', test_data, tables, actor, find_table, device, features)

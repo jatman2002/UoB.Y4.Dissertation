@@ -216,7 +216,7 @@ class DQN:
                     training_rejections += 1
                 trajectories[day].append(reward)
 
-                print(f'{print_string}\treward - {reward}')
+                # print(f'{print_string}\treward - {reward}')
 
                 # If term state
                 if step < len(bookings_on_day)-1:

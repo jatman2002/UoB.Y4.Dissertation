@@ -184,7 +184,7 @@ class PPO:
                     training_rejections += 1
                 trajectories[day].append(reward)
 
-                print(f'{print_string}\treward - {reward}')
+                # print(f'{print_string}\treward - {reward}')
 
                 if step < len(bookings_on_day)-1:
                     next_res = bookings_on_day.iloc[step+1][self.features]

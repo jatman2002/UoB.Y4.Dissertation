@@ -5,6 +5,8 @@ import logging
 from RL.DQN import DQN
 from RL.PPO import PPO
 
+original_stdout = sys.stdout
+
 log_file = os.path.join(os.getcwd(), "myprog.log")
 open(log_file, "w").close()
 logging.basicConfig(
@@ -23,12 +25,12 @@ class LoggerWriter:
     def flush(self):
         pass
 
-print('starting!')
+print('starting!', file=original_stdout)
 
 sys.stdout = LoggerWriter()
 
-PPO(1).run()
-DQN(1).run()
-
-PPO(2).run()
-DQN(2).run()
+for r in range(1,6):
+    print(f'Restaurant {r}\tPPO', file=original_stdout)
+    PPO(r).run()
+    print(f'Restaurant {r}\tDQN', file=original_stdout)
+    DQN(r).run()

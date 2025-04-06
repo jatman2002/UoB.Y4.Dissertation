@@ -1,9 +1,16 @@
 import sys
 import os
 import logging
+import argparse
 
 from RL.DQN import DQN
-from RL.PPO import PPO
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-r', dest='restaurant', type=int)
+parser.add_argument('-g', dest='gpu', type=int, default=0)
+args = parser.parse_args()
+
+assert args.restaurant != None, 'Need to specify restaurant with -r'
 
 original_stdout = sys.stdout
 
@@ -29,11 +36,4 @@ print('starting!', file=original_stdout)
 
 sys.stdout = LoggerWriter()
 
-gpu = 5
-print(f'Restaurant {2}\tDQN', file=original_stdout)
-# DQN(2, gpu).run()
-for r in range(2,6):
-    # print(f'Restaurant {r}\tPPO', file=original_stdout)
-    # PPO(r, gpu).run()
-    print(f'Restaurant {r}\tDQN', file=original_stdout)
-    DQN(r, gpu).run()
+DQN(args.restaurant, args.gpu).run()

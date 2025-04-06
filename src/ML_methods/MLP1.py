@@ -6,7 +6,7 @@ import os
 # import torch.nn as nn
 
 from keras import models
-from keras.layers import Dense, Input, Dropout
+from keras.layers import Dense, Input, Dropout, BatchNormalization
 
 
 from helper.Test import test_predictor
@@ -23,7 +23,7 @@ def find_table(predictor, reservation, diary, tables):
     best_table_index = -1
 
     # in order of probability, find the first one that fits
-    for t in order_of_tables:
+    for t in order_of_tables[:1]:
         best_table = tables.iloc[t]
 
         # ignore where prob is 0 i.e. the classifier will never choose it
@@ -88,10 +88,15 @@ def run(restaurant_name):
 
     inp = len(features)
     output = len(tables)
-    hidden1 = inp + (output - inp)//2
+    hidden1 = 64
 
     inputs = Input(shape=(inp,))
-    x = Dense(hidden1, activation='relu')(inputs)
+    x = BatchNormalization()(inputs)
+    x = Dense(64, activation='relu')(x)
+    x = BatchNormalization()(x)
+    x = Dense(64, activation='relu')(x)
+    x = BatchNormalization()(x)
+    x = Dense(32, activation='relu')(x)
     out = Dense(output, activation='softmax')(x)
 
     model = models.Model(inputs=inputs, outputs=out)

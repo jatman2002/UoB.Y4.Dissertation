@@ -13,15 +13,15 @@ import helper.Results as Results
 restaurant_name = '1'
 
 
-MLP1.run(restaurant_name)
+# MLP1.run(restaurant_name)
 # MLP2.run(restaurant_name)
 # MLP3.run(restaurant_name)
-# MLP4.run(restaurant_name)
+MLP4.run(restaurant_name)
 
 Results.run(restaurant_name, 'MLP1')
 # Results.run(restaurant_name, 'MLP2')
-# Results.run(restaurant_name, 'MLP3')
+Results.run(restaurant_name, 'MLP3')
 # Results.run(restaurant_name, 'MLP4')
 
-Results.run(1, 'DQN')
-Results.run(1, 'Existing')
+# Results.run(1, 'DQN')
+# Results.run(1, 'Existing')

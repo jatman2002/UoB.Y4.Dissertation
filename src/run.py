@@ -14,7 +14,7 @@ assert args.restaurant != None, 'Need to specify restaurant with -r'
 
 original_stdout = sys.stdout
 
-log_file = os.path.join(os.getcwd(), "myprog.log")
+log_file = os.path.join(os.getcwd(), f"myprog{args.restaurant}.log")
 open(log_file, "w").close()
 logging.basicConfig(
     filename=log_file,

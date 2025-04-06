@@ -30,7 +30,9 @@ print('starting!', file=original_stdout)
 sys.stdout = LoggerWriter()
 
 gpu = 5
-for r in range(1,6):
+print(f'Restaurant {2}\tDQN', file=original_stdout)
+DQN(2, gpu).run()
+for r in range(3,6):
     print(f'Restaurant {r}\tPPO', file=original_stdout)
     PPO(r, gpu).run()
     print(f'Restaurant {r}\tDQN', file=original_stdout)

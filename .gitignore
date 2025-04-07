@@ -10,3 +10,4 @@ models/
 *-train.csv
 *.pdf
 *.log
+dataDistribution.py

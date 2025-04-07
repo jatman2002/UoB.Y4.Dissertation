@@ -18,12 +18,12 @@ assert args.restaurant != None, 'Need to specify restaurant with -r'
 assert args.algo != None, 'Need to specify algorithm with -a'
 
 algos = {
-    'LR': LRGridSearch,
-    'RF': RFGridSearch,
-    'MLP1': MLP1,
-    'MLP2': MLP2,
-    'MLP3': MLP3,
-    'MLP4': MLP4,
+    'LR': LRGridSearch.LRGridSearch,
+    'RF': RFGridSearch.RFGridSearch,
+    'MLP1': MLP1.MLP1,
+    'MLP2': MLP2.MLP2,
+    'MLP3': MLP3.MLP3,
+    'MLP4': MLP4.MLP4,
     'PPO': PPO,
     'DQN': DQN
 }

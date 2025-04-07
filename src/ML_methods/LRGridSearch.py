@@ -11,7 +11,7 @@ from sklearn.model_selection import ParameterGrid
 from .helper.Test import get_wasted_slots
 from .helper.dataset import get_data
 
-class LFGridSearch:
+class LRGridSearch:
     def __init__(self, restaurant_name, gpu):
         self.name = 'LR'
         self.restaurant_name = restaurant_name
@@ -133,6 +133,9 @@ class LFGridSearch:
                 best_classifier = classifier
 
         print(f'BEST PARAMS - {best_p}')
+
+        Path(f'{os.getcwd()}/models/{self.name}/models').mkdir(parents=True, exist_ok=True)
+        Path(f'{os.getcwd()}/models/{self.name}/training').mkdir(parents=True, exist_ok=True)
 
         with open(f'{os.getcwd()}/models/{self.name}/models/{self.name}-R-{self.restaurant_name}.pkl', 'wb') as f:
             pickle.dump(best_classifier, f)

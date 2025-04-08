@@ -77,7 +77,7 @@ class MLP1:
         history = model.fit(
             X_train, 
             y_train, 
-            epochs=10, 
+            epochs=100, 
             batch_size=32)
         
         Path(f'{os.getcwd()}/models/{self.name}/models').mkdir(parents=True, exist_ok=True)

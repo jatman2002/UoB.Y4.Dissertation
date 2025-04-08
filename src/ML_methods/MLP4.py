@@ -64,23 +64,23 @@ class MLP4:
         return model
 
 
-def run(self):
+    def run(self):
 
-        X_train, y_train, tables = self.load_data()
+            X_train, y_train, tables = self.load_data()
 
-        print('TRAINING THE MLP CLASSIFIER')
+            print('TRAINING THE MLP CLASSIFIER')
 
-        model = self.create_model(len(self.features) + len(self.t_s), len(tables))
-        
-        history = model.fit(
-            X_train, 
-            y_train, 
-            epochs=100, 
-            batch_size=32)
-        
-        Path(f'{os.getcwd()}/models/{self.name}/models').mkdir(parents=True, exist_ok=True)
-        Path(f'{os.getcwd()}/models/{self.name}/training').mkdir(parents=True, exist_ok=True)
+            model = self.create_model(len(self.features) + len(self.t_s), len(tables))
+            
+            history = model.fit(
+                X_train, 
+                y_train, 
+                epochs=100, 
+                batch_size=32)
+            
+            Path(f'{os.getcwd()}/models/{self.name}/models').mkdir(parents=True, exist_ok=True)
+            Path(f'{os.getcwd()}/models/{self.name}/training').mkdir(parents=True, exist_ok=True)
 
-        model.save(f'{os.getcwd()}/models/{self.name}/models/{self.name}-R-{self.restaurant_name}.keras')
-        with open(f'{os.getcwd()}/models/{self.name}/training/{self.name}-R-{self.restaurant_name}.pkl', 'wb') as f:
-            pickle.dump(history, f)
+            model.save(f'{os.getcwd()}/models/{self.name}/models/{self.name}-R-{self.restaurant_name}.keras')
+            with open(f'{os.getcwd()}/models/{self.name}/training/{self.name}-R-{self.restaurant_name}.pkl', 'wb') as f:
+                pickle.dump(history, f)

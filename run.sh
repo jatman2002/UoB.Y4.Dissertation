@@ -1,5 +1,7 @@
 #! /bin/bash
 
+export CUDA_VISIBLE_DEVICES=5
+
 python3 app/src/train.py -r 1 -a MLP1
 python3 app/src/train.py -r 1 -a MLP2
 python3 app/src/train.py -r 1 -a MLP3

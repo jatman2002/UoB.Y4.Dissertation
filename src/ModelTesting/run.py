@@ -4,7 +4,7 @@ from ModelClasses.DQN import DQN
 from ModelClasses.PPO import PPO
 from ModelClasses.MLP12 import *
 from ModelClasses.MLP34 import *
-from ML_methods.helper import Results
+import Results
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-r', dest='restaurant', type=int, help='specify which restaurant')
@@ -31,4 +31,4 @@ algos[args.algo](args.restaurant, args.val).run()
 
 
 if args.results:
-    Results.run(args.restaurant, args.restaurant)
+    Results.run(args.restaurant, args.algo)

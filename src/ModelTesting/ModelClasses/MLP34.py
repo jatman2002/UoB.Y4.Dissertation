@@ -14,10 +14,10 @@ class MLP3_4(KerasModel):
     
     def load_data(self, isVal):
         print('LOADING DATA')
-        tables = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/MLP-State/Restaurant-{self.restaurant_name}-tables.csv')
+        tables = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{self.restaurant_name}-tables.csv')
 
         if isVal:
-            train = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{self.restaurant_name}-train.csv')
+            train = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/MLP-State/Restaurant-{self.restaurant_name}-train.csv')
             booking_date = pd.to_datetime(train['BookingDate']).dt.date
             unique_days = booking_date.unique()
             val_idx = int(len(unique_days) * 75 / 85)
@@ -26,7 +26,7 @@ class MLP3_4(KerasModel):
 
             return val, tables
 
-        test = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{self.restaurant_name}-test.csv')
+        test = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/MLP-State/Restaurant-{self.restaurant_name}-test.csv')
         # Adjust some features
         test['BookingStartTime'] = (test['BookingStartTime'] - 36000) / (60*15)
         test['Duration'] = test['Duration'] / (60*15)

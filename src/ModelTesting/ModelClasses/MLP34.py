@@ -5,7 +5,7 @@ import numpy as np
 
 class MLP3_4(KerasModel):
     def __init__(self, restaurant_name, name, isVal):
-        super().__init__(self, restaurant_name, name, isVal)
+        super().__init__(restaurant_name, name, isVal)
 
     def get_model_input(self, res_details, diary):
         state_details = (diary.flatten() != 0).astype(int)

@@ -4,12 +4,14 @@ from ModelClasses.DQN import DQN
 from ModelClasses.PPO import PPO
 from ModelClasses.MLP12 import *
 from ModelClasses.MLP34 import *
+from ML_methods.helper import Results
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-r', dest='restaurant', type=int, help='specify which restaurant')
 # parser.add_argument('-g', dest='gpu', type=int, default=0, help='specify which gpu to use')
 parser.add_argument('-a', dest='algo', type=str, help='specify which algorithm to use')
 parser.add_argument('-v', dest='val', action='store_true', default=False, help='use validation set')
+parser.add_argument('-R', dest='results', action='store_true', default=False, help='use validation set')
 args = parser.parse_args()
 
 assert args.restaurant != None, 'Need to specify restaurant with -r'
@@ -24,4 +26,9 @@ algos = {
     'MLP4': MLP4
     }
 
+
 algos[args.algo](args.restaurant, args.val).run()
+
+
+if args.results:
+    Results.run(args.restaurant, args.restaurant)

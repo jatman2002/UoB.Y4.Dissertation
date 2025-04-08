@@ -1,9 +1,9 @@
 import argparse
 
-from models.DQN import DQN
-from models.PPO import PPO
-from models.MLP12 import *
-from models.MLP34 import *
+from ModelClasses.DQN import DQN
+from ModelClasses.PPO import PPO
+from ModelClasses.MLP12 import *
+from ModelClasses.MLP34 import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-r', dest='restaurant', type=int, help='specify which restaurant')

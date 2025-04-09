@@ -12,7 +12,7 @@ parser.add_argument('-r', dest='restaurant', type=int, help='specify which resta
 parser.add_argument('-g', dest='gpu', type=int, default=0, help='specify which gpu to use')
 parser.add_argument('-a', dest='algo', type=str, help='specify which algorithm to use')
 parser.add_argument('-l', dest='log', action='store_false', default=True, help='disable logging to log file (using the flag prints all to terminal)')
-parser.add_argument('-s', dest='start_point', default=0, help='start point for grid search for MLP')
+parser.add_argument('-s', dest='start_point',  type=int, default=0, help='start point for grid search for MLP')
 args = parser.parse_args()
 
 assert args.restaurant != None, 'Need to specify restaurant with -r'

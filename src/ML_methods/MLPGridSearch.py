@@ -9,7 +9,7 @@ import pickle
 from keras import models
 from keras.layers import Dense, Input, BatchNormalization, Dropout
 
-from tf.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import EarlyStopping
 
 from .helper.dataset import feature_engineering
 

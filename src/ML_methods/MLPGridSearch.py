@@ -1,0 +1,124 @@
+# imports
+import pandas as pd
+import numpy as np
+import os
+
+from pathlib import Path
+import pickle
+
+from keras import models
+from keras.layers import Dense, Input, BatchNormalization, Dropout
+
+from tf_keras.callbacks import EarlyStopping
+from tf_keras.optimizers import Adam
+
+from .helper.dataset import feature_engineering
+
+class MLP:
+
+    def __init__(self, restaurant_name, gpu, start_point=0):
+        self.name = 'MLP'
+        self.restaurant_name = restaurant_name
+        self.features = ['GuestCount', 'BookingDateDayOfWeek', 'BookingDateMonth', 'BookingStartTime', 'Duration', 'EndTime']
+        self.t_s = []
+
+        self.params = {
+             'hidden1': [i for i in range(512, 1152, 256)],
+             'hidden2': [i for i in range(128, 576, 128)],
+             'dropout1': [i/10 for i in range(1,5)],
+             'dropout2': [i/10 for i in range(1,4)],
+             'lr': [1e-4, 1e-3, 1e-2]
+        }
+
+        self.search_space = [
+            {'hidden1': h1, 'hidden2': h2, 'dropout1': d1, 'dropout2': d2, 'lr': lr} 
+            for h1 in self.params['hidden1'] 
+            for h2 in self.params['hidden2'] 
+            for d1 in self.params['dropout1'] 
+            for d2 in self.params['dropout2'] 
+            for lr in self.params['lr']
+        ]
+
+        self.start_point = start_point
+
+    def load_data(self):
+        # LOAD DATA
+
+        tables = tables = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{self.restaurant_name}-tables.csv')
+        train = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/MLP-State/Restaurant-{self.restaurant_name}-train.csv')
+
+        feature_engineering(train, False)
+
+        self.t_s = [f'T{t}_S{s}' for t in range(len(tables)) for s in range(64)]
+
+        X = train.drop('TableCode', axis=1)
+        y = train['TableCode']
+
+        booking_date = pd.to_datetime(X['BookingDate']).dt.date
+        unique_days = booking_date.unique()
+
+        val_idx = int(len(unique_days) * 75 / 85)
+
+        train_days, val_days = unique_days[:val_idx], unique_days[val_idx:]
+
+        X_train = X[booking_date.isin(train_days)]
+        X_train = X_train[np.concatenate((self.features, self.t_s))]
+
+        y_train = y[:len(X_train)]
+
+        return X_train, y_train, tables
+    
+    def create_model(self, inp, out, params):
+
+        inputs = Input(shape=(inp,))
+        x = BatchNormalization()(inputs)
+        x = Dense(params['hidden1'], activation='relu')(x)
+        x = Dropout(params['dropout1'])(x)
+        x = Dense(params['hidden2'], activation='relu')(x)
+        x = Dropout('dropout2')(x)
+        x = Dense(64, activation='relu')(x)
+        output = Dense(out, activation='softmax')(x)
+
+        model = models.Model(inputs=inputs, outputs=output)
+
+        model.compile(optimizer=Adam(params['lr']),
+                loss='KLDivergence',
+                metrics=['accuracy'])
+        
+        return model
+
+
+    def run(self):
+
+            X_train, y_train, tables = self.load_data()
+
+            Path(f'{os.getcwd()}/models/{self.name}/grid').mkdir(parents=True, exist_ok=True)
+
+            print('TRAINING THE MLP CLASSIFIER')
+
+            idx = self.start_point
+
+            es_loss = EarlyStopping(monitor='loss', patience=10, min_delta=0.001, mode='min', restore_best_weights=True)
+
+            for params in self.search_space[self.start_point:]:
+
+                print(f'PARAM COMBO = {idx}')
+
+                model = self.create_model(len(self.features) + len(self.t_s), len(tables), params)
+                
+                model.fit(
+                    X_train, 
+                    y_train, 
+                    epochs=100, 
+                    batch_size=32,
+                    verbose=2,
+                    callbacks=[es_loss])
+                
+                model.save(f'{os.getcwd()}/models/{self.name}/grid/{self.name}-{idx}.keras')
+                
+                idx += 1
+            
+            # Path(f'{os.getcwd()}/models/{self.name}/models').mkdir(parents=True, exist_ok=True)
+            # Path(f'{os.getcwd()}/models/{self.name}/training').mkdir(parents=True, exist_ok=True)
+            # with open(f'{os.getcwd()}/models/{self.name}/training/{self.name}-R-{self.restaurant_name}.pkl', 'wb') as f:
+            #     pickle.dump(history, f)

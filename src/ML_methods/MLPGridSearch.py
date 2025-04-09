@@ -72,7 +72,7 @@ class MLP:
         x = Dense(params['hidden1'], activation='relu')(x)
         x = Dropout(params['dropout1'])(x)
         x = Dense(params['hidden2'], activation='relu')(x)
-        x = Dropout('dropout2')(x)
+        x = Dropout(params['dropout2'])(x)
         x = Dense(64, activation='relu')(x)
         output = Dense(out, activation='softmax')(x)
 

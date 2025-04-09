@@ -29,6 +29,7 @@ algos = {
 
 algos[args.algo](args.restaurant, args.val).run()
 
+print()
 
 if args.results:
     Results.run(args.restaurant, args.algo)

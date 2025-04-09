@@ -76,7 +76,8 @@ class MLP4:
                 X_train, 
                 y_train, 
                 epochs=100, 
-                batch_size=32)
+                batch_size=32,
+                verbose=2)
             
             Path(f'{os.getcwd()}/models/{self.name}/models').mkdir(parents=True, exist_ok=True)
             Path(f'{os.getcwd()}/models/{self.name}/training').mkdir(parents=True, exist_ok=True)

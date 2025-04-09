@@ -5,7 +5,7 @@ from .PytorchModel import PytorchModel
 
 
 class DQN(PytorchModel):
-    def __init__(self, restaurant_name):
+    def __init__(self, restaurant_name, isVal):
         super().__init__(restaurant_name, 'DQN', DqnNetwork)
 
     def run(self):

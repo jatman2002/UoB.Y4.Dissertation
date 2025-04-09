@@ -23,14 +23,14 @@ class MLP4:
         # LOAD DATA
 
         tables = tables = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{self.restaurant_name}-tables.csv')
-        train = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/MLP-State/Restaurant-{self.restaurant_name}-train.csv')
+        train = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/MLP-State-Soft-Label/Restaurant-{self.restaurant_name}-train.csv')
 
         feature_engineering(train, False)
 
         self.t_s = [f'T{t}_S{s}' for t in range(len(tables)) for s in range(64)]
 
         X = train.drop('TableCode', axis=1)
-        y = train['TableCode']
+        y = train[tables['TableCode'].astype(str).values]
 
         booking_date = pd.to_datetime(X['BookingDate']).dt.date
         unique_days = booking_date.unique()

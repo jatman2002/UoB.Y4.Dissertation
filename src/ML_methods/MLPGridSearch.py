@@ -99,7 +99,7 @@ class MLP:
 
             for params in self.search_space[self.start_point:]:
 
-                print(f'PARAM COMBO = {idx}')
+                print(f'PARAM COMBO = {idx}\t{params=}')
 
                 model = self.create_model(len(self.features) + len(self.t_s), len(tables), params)
                 

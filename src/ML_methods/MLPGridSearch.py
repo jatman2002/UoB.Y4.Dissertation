@@ -29,12 +29,11 @@ class MLP:
         }
 
         self.search_space = [
-            {'hidden1': h1, 'hidden2': h2, 'dropout1': d1, 'dropout2': d2, 'lr': lr} 
+            {'hidden1': h1, 'hidden2': h2, 'dropout1': d1, 'dropout2': d2} 
             for h1 in self.params['hidden1'] 
             for h2 in self.params['hidden2'] 
             for d1 in self.params['dropout1'] 
-            for d2 in self.params['dropout2'] 
-            for lr in self.params['lr']
+            for d2 in self.params['dropout2']
         ]
 
         self.start_point = start_point

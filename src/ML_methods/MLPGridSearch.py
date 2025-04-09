@@ -10,7 +10,6 @@ from keras import models
 from keras.layers import Dense, Input, BatchNormalization, Dropout
 
 from tf_keras.callbacks import EarlyStopping
-from tf_keras.optimizers import Adam
 
 from .helper.dataset import feature_engineering
 
@@ -26,8 +25,7 @@ class MLP:
              'hidden1': [i for i in range(512, 1152, 256)],
              'hidden2': [i for i in range(128, 576, 128)],
              'dropout1': [i/10 for i in range(1,5)],
-             'dropout2': [i/10 for i in range(1,4)],
-             'lr': [1e-4, 1e-3, 1e-2]
+             'dropout2': [i/10 for i in range(1,4)]
         }
 
         self.search_space = [
@@ -81,7 +79,7 @@ class MLP:
 
         model = models.Model(inputs=inputs, outputs=output)
 
-        model.compile(optimizer=Adam(params['lr']),
+        model.compile(optimizer='adam',
                 loss='KLDivergence',
                 metrics=['accuracy'])
         

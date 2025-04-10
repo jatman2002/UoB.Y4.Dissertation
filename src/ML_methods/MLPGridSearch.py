@@ -89,7 +89,7 @@ class MLP:
 
             X_train, y_train, tables = self.load_data()
 
-            Path(f'{os.getcwd()}/models/{self.name}/grid').mkdir(parents=True, exist_ok=True)
+            Path(f'/mnt/fast0/jy894/models/{self.name}/grid').mkdir(parents=True, exist_ok=True)
 
             print('TRAINING THE MLP CLASSIFIER')
 

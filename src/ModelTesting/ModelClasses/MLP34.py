@@ -2,6 +2,7 @@ import os
 import pandas as pd
 from .KerasModel import KerasModel
 import numpy as np
+import keras
 
 class MLP3_4(KerasModel):
     def __init__(self, restaurant_name, name, isVal):
@@ -41,3 +42,11 @@ class MLP3(MLP3_4):
 class MLP4(MLP3_4):
     def __init__(self, restaurant_name, isVal):
         super().__init__(restaurant_name, 'MLP4', isVal)
+
+class MLP(MLP3_4):
+    def __init__(self, restaurant_name, isVal, model_name):
+        super().__init__(restaurant_name, 'MLP', isVal)
+        self.model_name = model_name
+
+    def load_model(self):
+        self.model = keras.saving.load_model(f'{os.getcwd()}/models/{self.name}/grid/{self.name}-{self.model_name}.keras')

@@ -111,7 +111,7 @@ class MLP:
                     verbose=2,
                     callbacks=[es_loss])
                 
-                model.save(f'{os.getcwd()}/models/{self.name}/grid/{self.name}-{idx}.keras')
+                model.save(f'/mnt/fast0/jy894/models/{self.name}/grid/{self.name}-{idx}.keras')
                 
                 idx += 1
             

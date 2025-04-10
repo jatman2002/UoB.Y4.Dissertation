@@ -22,10 +22,10 @@ class MLP:
         self.t_s = []
 
         self.params = {
-             'hidden1': [i for i in range(512, 1152, 256)],
-             'hidden2': [i for i in range(128, 576, 128)],
-             'dropout1': [i/10 for i in range(1,5)],
-             'dropout2': [i/10 for i in range(1,4)]
+             'hidden1': [512,1024,2046],
+             'hidden2': [128,256,512],
+             'dropout1': [0.1,0.2,0.3],
+             'dropout2': [0.1,0.2]
         }
 
         self.search_space = [

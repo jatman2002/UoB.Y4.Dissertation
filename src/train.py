@@ -5,7 +5,7 @@ import argparse
 
 from RL.DQN import DQN
 from RL.PPO import PPO
-from ML_methods import LRGridSearch, RFGridSearch, MLP1, MLP2, MLP3, MLP4, MLPGridSearch
+from ML_methods import LRGridSearch, RFGridSearch, MLP1, MLP2, MLP3, MLP4, MLP
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-r', dest='restaurant', type=int, help='specify which restaurant')
@@ -25,7 +25,7 @@ algos = {
     'MLP2': MLP2.MLP2,
     'MLP3': MLP3.MLP3,
     'MLP4': MLP4.MLP4,
-    'MLP': MLPGridSearch.MLP,
+    'MLP': MLP.MLP,
     'PPO': PPO,
     'DQN': DQN
 }
@@ -57,8 +57,4 @@ if args.log:
 
     sys.stdout = LoggerWriter()
 
-if args.start_point == 0:
-    algos[args.algo](args.restaurant, args.gpu).run()
-else:
-    
-    algos[args.algo](args.restaurant, args.gpu, args.start_point).run()
+algos[args.algo](args.restaurant, args.gpu).run()

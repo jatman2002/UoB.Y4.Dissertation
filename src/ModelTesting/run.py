@@ -30,15 +30,9 @@ algos = {
     }
 
 
-Results.run(args.restaurant, args.algo, 0)
-if args.algo == 'MLP':
-    for m in range(args.start, args.end):
-        algos[args.algo](args.restaurant, args.val, m).run()
-        Results.run(args.restaurant, args.algo, m)
-else:
-    algos[args.algo](args.restaurant, args.val).run()
+algos[args.algo](args.restaurant, args.val).run()
 
 print()
 
-# if args.results:
-#     Results.run(args.restaurant, args.algo)
+if args.results:
+    Results.run(args.restaurant, args.algo)

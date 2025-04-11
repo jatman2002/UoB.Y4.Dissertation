@@ -38,7 +38,7 @@ def run(restaurant_name, method_name, MLP=None):
 
     results_path = f'/mnt/fast0/jy894/results/Restaurant-{restaurant_name}/{restaurant_name}-{method_name}'
     if not MLP is None:
-        results_path = f'{results_path}-{MLP}/'
+        results_path = f'{results_path}-{MLP}'
 
     df.to_csv(f'{results_path}.csv')
 

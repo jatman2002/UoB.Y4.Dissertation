@@ -10,6 +10,10 @@ from keras import models
 from tensorflow.keras.callbacks import EarlyStopping
 from keras.layers import Dense, Input, BatchNormalization, Dropout
 
+from tensorflow.keras import backend as K
+import gc
+import tensorflow as tf
+
 from .helper.dataset import feature_engineering
 
 class MLP:
@@ -19,6 +23,10 @@ class MLP:
         self.restaurant_name = restaurant_name
         self.features = ['GuestCount', 'BookingDateDayOfWeek', 'BookingDateMonth', 'BookingStartTime', 'Duration', 'EndTime']
         self.t_s = []
+  
+        gpus = tf.config.list_physical_devices('GPU')
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
 
     def load_data(self):
         # LOAD DATA
@@ -85,9 +93,13 @@ class MLP:
                 verbose=2,
                 callbacks=[es_loss])
             
-            Path(f'{os.getcwd()}/models/{self.name}/models').mkdir(parents=True, exist_ok=True)
-            Path(f'{os.getcwd()}/models/{self.name}/training').mkdir(parents=True, exist_ok=True)
+            Path(f'/mnt/fast0/jy894//models/{self.name}/models').mkdir(parents=True, exist_ok=True)
+            Path(f'/mnt/fast0/jy894//models/{self.name}/training').mkdir(parents=True, exist_ok=True)
 
-            model.save(f'{os.getcwd()}/models/{self.name}/models/{self.name}-R-{self.restaurant_name}.keras')
-            with open(f'{os.getcwd()}/models/{self.name}/training/{self.name}-R-{self.restaurant_name}.pkl', 'wb') as f:
+            model.save(f'/mnt/fast0/jy894/models/{self.name}/models/{self.name}-R-{self.restaurant_name}.keras')
+            with open(f'/mnt/fast0/jy894/models/{self.name}/training/{self.name}-R-{self.restaurant_name}.pkl', 'wb') as f:
                 pickle.dump(history, f)
+
+            K.clear_session()
+            del model
+            gc.collect()

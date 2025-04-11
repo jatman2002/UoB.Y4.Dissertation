@@ -3,9 +3,11 @@ import pandas as pd
 import csv
 from pathlib import Path
 
-def run(restaurant_name, method_name):
+def run(restaurant_name, method_name, MLP=None):
 
     file_path = f'/mnt/fast0/jy894/outputs/Restaurant-{restaurant_name}/{method_name}/'
+    if not MLP is None:
+        file_path = f'{file_path}{MLP}/'
 
     Path(file_path).mkdir(parents=True, exist_ok=True)
 
@@ -34,7 +36,11 @@ def run(restaurant_name, method_name):
 
     Path(f'/mnt/fast0/jy894/results/Restaurant-{restaurant_name}/').mkdir(parents=True, exist_ok=True)
 
-    df.to_csv(f'/mnt/fast0/jy894/results/Restaurant-{restaurant_name}/{restaurant_name}-{method_name}.csv')
+    results_path = f'/mnt/fast0/jy894/results/Restaurant-{restaurant_name}/{restaurant_name}-{method_name}'
+    if not MLP is None:
+        results_path = f'{results_path}-{MLP}/'
+
+    df.to_csv(f'{results_path}.csv')
 
     wasted_count = df['WastedCount'].sum()
     rejections = df['Rejections'].sum()

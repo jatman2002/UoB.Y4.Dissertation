@@ -50,5 +50,4 @@ class MLP(MLP3_4):
         self.file_path = f'Restaurant-{restaurant_name}/MLP/{model_name}'
 
     def load_model(self):
-        print(self.file_path)
         self.model = keras.saving.load_model(f'/mnt/fast0/jy894/models/{self.name}/grid/{self.name}-{self.model_name}.keras')

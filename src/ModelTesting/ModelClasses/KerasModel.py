@@ -13,8 +13,8 @@ class KerasModel(Model):
         self.test, self.tables = self.load_data(isVal)
         self.feature_engineering(self.test)
         self.model = None
-        self.load_model()
         self.file_path = f'Restaurant-{restaurant_name}/{name}'
+        self.load_model()
 
     def load_model(self):
         self.model = keras.saving.load_model(f'{os.getcwd()}/models/{self.name}/models/{self.name}-R-{self.restaurant_name}.keras')

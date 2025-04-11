@@ -32,7 +32,7 @@ algos = {
 if args.algo == 'MLP':
     for m in range(args.start, args.end):
         algos[args.algo](args.restaurant, args.val, m).run()
-        Results.run(args.restaurant, f'{args.algo}/m')
+        Results.run(args.restaurant, f'{args.algo}/{m}')
 else:
     algos[args.algo](args.restaurant, args.val).run()
 

@@ -61,8 +61,8 @@ class Model:
         return wasted_count  
     
     def write_schedule(self, diary, tables, day, num_reservations, num_rejections):
-        Path(f'{os.getcwd()}/src/outputs/{self.file_path}').mkdir(parents=True, exist_ok=True)
-        with open(f'{os.getcwd()}/src/outputs/{self.file_path}/{day.strftime("%Y-%m-%d")}.csv', 'w', newline='') as csvfile:
+        Path(f'/mnt/fast0/jy894/outputs/{self.file_path}').mkdir(parents=True, exist_ok=True)
+        with open(f'/mnt/fast0/jy894/outputs/{self.file_path}/{day.strftime("%Y-%m-%d")}.csv', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
 
             output = [['reservations: ', num_reservations, 'rejections:', num_rejections, 'wasted slots', self.get_wasted_slots(diary)],[]]

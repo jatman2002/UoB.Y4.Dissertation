@@ -5,7 +5,7 @@ from pathlib import Path
 
 def run(restaurant_name, method_name):
 
-    file_path = f'{os.getcwd()}/src/outputs/Restaurant-{restaurant_name}/{method_name}/'
+    file_path = f'/mnt/fast0/jy894/outputs/Restaurant-{restaurant_name}/{method_name}/'
 
     Path(file_path).mkdir(parents=True, exist_ok=True)
 
@@ -32,9 +32,9 @@ def run(restaurant_name, method_name):
     df = pd.DataFrame(results, columns=['Date', 'ReservationCount', 'Rejections', 'WastedCount'])
 
 
-    Path(f'{os.getcwd()}/src/results/Restaurant-{restaurant_name}/').mkdir(parents=True, exist_ok=True)
+    Path(f'/mnt/fast0/jy894/results/Restaurant-{restaurant_name}/').mkdir(parents=True, exist_ok=True)
 
-    df.to_csv(f'{os.getcwd()}/src/results/Restaurant-{restaurant_name}/{restaurant_name}-{method_name}.csv')
+    df.to_csv(f'/mnt/fast0/jy894/results/Restaurant-{restaurant_name}/{restaurant_name}-{method_name}.csv')
 
     wasted_count = df['WastedCount'].sum()
     rejections = df['Rejections'].sum()

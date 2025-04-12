@@ -102,7 +102,6 @@ class Model:
                 reservation = reservations_for_day.iloc[j]
                 
                 best_table_index = self.find_table(reservation[self.features], diary)
-                print(best_table_index)
                 if best_table_index == -1:
                     rejections += 1
                     continue

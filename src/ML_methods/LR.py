@@ -3,8 +3,7 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 
-from helper.Test import test_predictor
-from helper.dataset import get_data
+from .helper.dataset import get_data
 
 import pickle
 from pathlib import Path

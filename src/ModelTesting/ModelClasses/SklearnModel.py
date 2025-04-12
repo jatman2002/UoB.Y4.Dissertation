@@ -21,7 +21,7 @@ class SklearnModel(Model):
         self.load_model()
 
     def load_model(self):
-        pickle_path = f'/mnt/fast0/jy894/models/{self.name}//models/{self.name}/models/{self.name}-R-{self.restaurant_name}.pkl'
+        pickle_path = f'/mnt/fast0/jy894/models/{self.name}/models/{self.name}-R-{self.restaurant_name}.pkl'
         with open(pickle_path, 'rb') as file:
             self.model = pickle.load(file)
 

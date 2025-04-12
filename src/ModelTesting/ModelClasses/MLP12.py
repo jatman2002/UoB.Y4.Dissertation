@@ -3,6 +3,7 @@ from .KerasModel import KerasModel
 class MLP1_2(KerasModel):
     def __init__(self, restaurant_name, name, isVal):
         super().__init__(restaurant_name, name, isVal)
+        self.file_path = f'val/{self.file_path}'
 
     def get_model_input(self, res_details, diary):
         return res_details.reshape(1,-1)

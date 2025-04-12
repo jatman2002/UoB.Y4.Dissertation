@@ -48,4 +48,4 @@ class MLP(MLP3_4):
         super().__init__(restaurant_name, 'MLP', isVal)
 
     def load_model(self):
-        self.model = keras.saving.load_model(f'/mnt/fast0/jy894/models/{self.name}//models/{self.name}/models/{self.name}-R-{self.restaurant_name}.keras')
+        self.model = keras.saving.load_model(f'/mnt/fast0/jy894/models/{self.name}/models/{self.name}-R-{self.restaurant_name}.keras')

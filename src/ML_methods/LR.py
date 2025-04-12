@@ -74,7 +74,7 @@ class LR:
         # fit the RF
         print('TRAINING THE LOGISTIC REGRESSION CLASSIFIER')
         classifier = LogisticRegression(
-            penalty='None', 
+            penalty='none', 
             C=0.01, 
             solver='lbfgs')
         classifier.fit(X_train, y_train)

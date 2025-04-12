@@ -25,16 +25,16 @@ class SklearnModel(Model):
         with open(pickle_path, 'rb') as file:
             self.model = pickle.load(file)
 
-    def find_table(self, predictor, reservation, diary, tables):
+    def find_table(self, reservation, diary):
 
-        probabilities = predictor.predict_proba(pd.DataFrame([reservation]))[0]
+        probabilities = self.model.predict_proba(pd.DataFrame([reservation]))[0]
         order_of_tables = np.argsort(probabilities)[::-1]
 
         best_table_index = -1
 
         # in order of probability, find the first one that fits
         for t in order_of_tables:
-            best_table = tables.iloc[t]
+            best_table = self.tables.iloc[t]
 
             # ignore where prob is 0 i.e. the classifier will never choose it
             if probabilities[t] <= 0.:

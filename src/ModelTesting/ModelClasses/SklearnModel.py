@@ -45,7 +45,7 @@ class SklearnModel(Model):
                 continue
 
             # 2. time constraint
-            if np.all(diary[t][int(reservation['BookingStartTime']):int(reservation['EndTime'])] != [None]*int(reservation['Duration'])):
+            if np.any(diary[t][int(reservation['BookingStartTime']):int(reservation['EndTime'])] != 0):
                 continue
 
             return t

@@ -37,13 +37,13 @@ class Model:
         reservations['BookingDateDay'] = booking_date.dt.day
         reservations['BookingDateMonth'] = booking_date.dt.month
 
-        reservations['BookingStartTime'] = (reservations['BookingStartTime'] - 36000) / (60*15)
-        reservations['Duration'] = reservations['Duration'] / (60*15)
-        reservations["EndTime"] = reservations["BookingStartTime"] + reservations["Duration"]
+        # reservations['BookingStartTime'] = (reservations['BookingStartTime'] - 36000) / (60*15)
+        # reservations['Duration'] = reservations['Duration'] / (60*15)
+        # reservations["EndTime"] = reservations["BookingStartTime"] + reservations["Duration"]
 
-        if use_label_encoder:
-            label_encoder = LabelEncoder()
-            reservations['TableCode'] = label_encoder.fit_transform(reservations['TableCode'])
+        # if use_label_encoder:
+        #     label_encoder = LabelEncoder()
+        #     reservations['TableCode'] = label_encoder.fit_transform(reservations['TableCode'])
 
     def get_wasted_slots(self, diary):
         min_booking_length = 6

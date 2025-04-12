@@ -21,7 +21,7 @@ class Model:
 
             val['BookingStartTime'] = (val['BookingStartTime'] - 36000) / (60*15)
             val['Duration'] = val['Duration'] / (60*15)
-            val["EndTime"] = val["BookingStartTime"] + test["Duration"]
+            val["EndTime"] = val["BookingStartTime"] + val["Duration"]
 
             return val, tables
 
@@ -92,7 +92,8 @@ class Model:
         unique_days = booking_date_as_dt.unique()
 
         for i, day in enumerate(unique_days):
-            print(f'Looking at day {i} / {len(unique_days)}\t{day=}', end='\r')
+            # print(f'Looking at day {i} / {len(unique_days)}\t{day=}', end='\r')
+            print(f'Looking at day {i} / {len(unique_days)}\t{day=}')
             reservations_for_day = self.test.loc[booking_date_as_dt == day]
             rejections = 0
 
@@ -100,8 +101,10 @@ class Model:
 
             for j in range(len(reservations_for_day)):
                 reservation = reservations_for_day.iloc[j]
+                print(reservation)
                 
                 best_table_index = self.find_table(reservation[self.features], diary)
+                print(best_table_index)
                 if best_table_index == -1:
                     rejections += 1
                     continue

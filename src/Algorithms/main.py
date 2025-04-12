@@ -4,10 +4,11 @@ from Reallocation import run
 
 restaurant = RestaurantState(36000, 64, 15, 6)
 
-parse_tables(restaurant, 'C:/git/UoB.Y4.Dissertation/src/Restaurant-1/tables.csv')
+r_name = 5
 
-all_requests = parse_reservations(restaurant, 'C:/git/UoB.Y4.Dissertation/src/Restaurant-1/reservations.csv')
-all_requests = all_requests[1082:]
+parse_tables(restaurant, f'C:/git/UoB.Y4.Dissertation/src/SQL-DATA/Restaurant-{r_name}-tables.csv')
+
+all_requests = parse_reservations(restaurant, f'C:/git/UoB.Y4.Dissertation/src/SQL-DATA/Restaurant-{r_name}-test.csv')
 
 for day in all_requests:
 
@@ -19,4 +20,4 @@ for day in all_requests:
 
     r, rejected = run(r)
 
-    output_schedule(r, day[0].booking_date, rejected)
+    output_schedule(r, day[0].booking_date, rejected, r_name)

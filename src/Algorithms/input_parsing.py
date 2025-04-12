@@ -7,6 +7,9 @@ from Classes.Table import Table
 
 from helper import *
 
+from pathlib import Path
+import os
+
 
 def parse_reservations(restaurant, file): #'C:/git/UoB.Y4.Dissertation/src/Restaurant-1/reservations.csv'
 
@@ -45,8 +48,8 @@ def parse_reservations(restaurant, file): #'C:/git/UoB.Y4.Dissertation/src/Resta
                 day_requests = []
 
             start_slot = convert_time_to_slot(int(row[3]) - restaurant.opening_time, restaurant.slot_length)
-            duration = convert_time_to_slot(int(row[4]), restaurant.slot_length)
-            created_on = datetime.strptime(row[5], '%Y-%m-%d %H:%M:%S.%f')
+            duration = convert_time_to_slot(int(row[5]), restaurant.slot_length)
+            created_on = datetime.strptime(row[6], '%Y-%m-%d %H:%M:%S.%f')
 
             request = ReservationRequest(booking_code, guest_count, booking_date, start_slot, duration, created_on)
 
@@ -65,9 +68,9 @@ def parse_tables(restaurant, file): #'C:/git/UoB.Y4.Dissertation/src/Restaurant-
         tables = []
 
         for row in reader:
-            table_code = int(row[1])
-            min_covers = int(row[2])
-            max_covers = int(row[3])
+            table_code = int(row[0])
+            min_covers = int(row[1])
+            max_covers = int(row[2])
 
             table = Table(table_code, min_covers, max_covers, restaurant.slot_count)
 
@@ -77,9 +80,12 @@ def parse_tables(restaurant, file): #'C:/git/UoB.Y4.Dissertation/src/Restaurant-
 
 
 
-def output_schedule(restaurant, day, rejected):
-    with open('C:/git/UoB.Y4.Dissertation/src/outputs/Restaurant-1/Non-ML/' + day.strftime('%Y-%m-%d') + '.csv', 'w', newline='') as csvfile:
+def output_schedule(restaurant, day, rejected, r_name):
+    Path(f'{os.getcwd()}/src/outputs/Restaurant-{r_name}/Non-ML').mkdir(parents=True, exist_ok=True)
+
+    with open(f'{os.getcwd()}/src/outputs/Restaurant-{r_name}/Non-ML/{day.strftime("%Y-%m-%d")}.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
+
 
         output = [['reservations: ', len(restaurant.reservation_requests), 'rejections:', rejected, 'wasted slots', get_wasted_slots(restaurant.tables)],[]]
         for table in restaurant.tables:
@@ -96,24 +102,16 @@ def output_schedule(restaurant, day, rejected):
 
 
 def get_wasted_slots(diary):
-    min_booking_length = 6
-    total_wasted_slots = 0
-    wasted_count = 0
-    for table in diary:
-        empty_slots = 0
-        for slot in table:
-            # if slot == 0:
-            #     wasted_slots += 1
-            # else:
-            #     total_wasted_slots += wasted_slots % min_booking_length
-            #     wasted_count += 1
-            #     wasted_slots = 0
+        min_booking_length = 6
+        wasted_count = 0
+        for table in diary:
+            empty_slots = 0
+            for slot in table.reservations:
+                if slot != None:
+                    if empty_slots < min_booking_length and empty_slots > 0:
+                        wasted_count += 1
+                    empty_slots = 0
+                    continue
+                empty_slots += 1
 
-            if slot != 0:
-                if empty_slots < min_booking_length and empty_slots > 0:
-                    wasted_count += 1
-                empty_slots = 0
-                continue
-            empty_slots += 1
-
-    return wasted_count
+        return wasted_count  

@@ -92,7 +92,7 @@ def get_wasted_slots(state, table, request):
 
     wasted_slots_after = 0
     slot = end_slot + 1
-    while slot <= end_slot + state.minimum_booking_length and slot <= state.slot_count:
+    while slot <= end_slot + state.minimum_booking_length and slot < state.slot_count:
         if table.reservations[slot] is not None:
             break
         wasted_slots_after += 1

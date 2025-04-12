@@ -92,9 +92,7 @@ class Model:
         unique_days = booking_date_as_dt.unique()
 
         for i, day in enumerate(unique_days):
-            input()
-            # print(f'Looking at day {i} / {len(unique_days)}\t{day=}', end='\r')
-            print(f'Looking at day {i} / {len(unique_days)}\t{day=}')
+            print(f'Looking at day {i} / {len(unique_days)}\t{day=}', end='\r')
             reservations_for_day = self.test.loc[booking_date_as_dt == day]
             rejections = 0
 
@@ -102,7 +100,6 @@ class Model:
 
             for j in range(len(reservations_for_day)):
                 reservation = reservations_for_day.iloc[j]
-                print(reservation)
                 
                 best_table_index = self.find_table(reservation[self.features], diary)
                 print(best_table_index)

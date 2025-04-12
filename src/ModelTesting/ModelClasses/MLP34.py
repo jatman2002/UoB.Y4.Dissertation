@@ -7,7 +7,7 @@ import keras
 class MLP3_4(KerasModel):
     def __init__(self, restaurant_name, name, isVal):
         super().__init__(restaurant_name, name, isVal)
-        self.file_path = f'val/{self.file_path}'
+        self.file_path = f'{self.file_path}'
 
     def get_model_input(self, res_details, diary):
         state_details = (diary.flatten() != 0).astype(int)

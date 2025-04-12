@@ -92,6 +92,7 @@ class Model:
         unique_days = booking_date_as_dt.unique()
 
         for i, day in enumerate(unique_days):
+            input()
             # print(f'Looking at day {i} / {len(unique_days)}\t{day=}', end='\r')
             print(f'Looking at day {i} / {len(unique_days)}\t{day=}')
             reservations_for_day = self.test.loc[booking_date_as_dt == day]

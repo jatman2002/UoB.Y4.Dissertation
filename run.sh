@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # CUDA_VISIBLE_DEVICES=3 python3 src/train.py -r 1 -a MLP1
-CUDA_VISIBLE_DEVICES=3 python3 src/train.py -r 2 -a MLP2
+# CUDA_VISIBLE_DEVICES=3 python3 src/train.py -r 2 -a MLP2
 # CUDA_VISIBLE_DEVICES=3 python3 src/train.py -r 3 -a MLP3
 # CUDA_VISIBLE_DEVICES=3 python3 src/train.py -r 4 -a MLP4
 

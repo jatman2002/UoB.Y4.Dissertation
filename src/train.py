@@ -5,7 +5,7 @@ import argparse
 
 from RL.DQN import DQN
 from RL.PPO import PPO
-from ML_methods import LRGridSearch, RFGridSearch, MLP1, MLP2, MLP3, MLP4, MLP
+from ML_methods import LRGridSearch, RFGridSearch, MLP1, MLP2, MLP3, MLP4, MLP, LR, RF
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-r', dest='restaurant', type=int, help='specify which restaurant')
@@ -19,8 +19,8 @@ assert args.restaurant != None, 'Need to specify restaurant with -r'
 assert args.algo != None, 'Need to specify algorithm with -a'
 
 algos = {
-    'LR': LRGridSearch.LRGridSearch,
-    'RF': RFGridSearch.RFGridSearch,
+    'LR': LR.LR,
+    'RF': RF.RF,
     'MLP1': MLP1.MLP1,
     'MLP2': MLP2.MLP2,
     'MLP3': MLP3.MLP3,

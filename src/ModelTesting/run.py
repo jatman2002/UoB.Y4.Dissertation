@@ -4,6 +4,7 @@ from ModelClasses.DQN import DQN
 from ModelClasses.PPO import PPO
 from ModelClasses.MLP12 import *
 from ModelClasses.MLP34 import *
+from ModelClasses.SklearnModel import RF, LR
 import Results
 
 parser = argparse.ArgumentParser()
@@ -26,7 +27,9 @@ algos = {
     'MLP2': MLP2,
     'MLP3': MLP3,
     'MLP4': MLP4,
-    'MLP': MLP
+    'MLP': MLP,
+    'RF': RF,
+    'LR': LR
     }
 
 

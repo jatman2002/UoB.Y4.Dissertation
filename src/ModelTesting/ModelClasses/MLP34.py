@@ -44,10 +44,8 @@ class MLP4(MLP3_4):
         super().__init__(restaurant_name, 'MLP4', isVal)
 
 class MLP(MLP3_4):
-    def __init__(self, restaurant_name, isVal, model_name):
-        self.model_name = model_name
+    def __init__(self, restaurant_name, isVal):
         super().__init__(restaurant_name, 'MLP', isVal)
-        self.file_path = f'Restaurant-{restaurant_name}/MLP/{model_name}'
 
     def load_model(self):
         self.model = keras.saving.load_model(f'/mnt/fast0/jy894/models/{self.name}//models/{self.name}/models/{self.name}-R-{self.restaurant_name}.keras')

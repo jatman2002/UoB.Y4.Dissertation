@@ -16,35 +16,28 @@ def write_schedule(file_path, diary, tables, day, num_reservations, num_rejectio
             table_output = []
             table_output.append(table_code)
             for slot in table:
-                if slot == None:
+                if slot == 0:
                     table_output.append('')
                 else:
                     table_output.append(slot)
             output.append(table_output)
 
         writer.writerows(output)
+
 def get_wasted_slots(diary):
-    min_booking_length = 6
-    total_wasted_slots = 0
-    wasted_count = 0
-    for table in diary:
-        empty_slots = 0
-        for slot in table:
-            # if slot == 0:
-            #     wasted_slots += 1
-            # else:
-            #     total_wasted_slots += wasted_slots % min_booking_length
-            #     wasted_count += 1
-            #     wasted_slots = 0
+        min_booking_length = 6
+        wasted_count = 0
+        for table in diary:
+            empty_slots = 0
+            for slot in table:
+                if slot != None:
+                    if empty_slots < min_booking_length and empty_slots > 0:
+                        wasted_count += 1
+                    empty_slots = 0
+                    continue
+                empty_slots += 1
 
-            if slot != 0:
-                if empty_slots < min_booking_length and empty_slots > 0:
-                    wasted_count += 1
-                empty_slots = 0
-                continue
-            empty_slots += 1
-
-    return wasted_count
+        return wasted_count  
 
 # Load data
 for restaurant_name in range(1,6):

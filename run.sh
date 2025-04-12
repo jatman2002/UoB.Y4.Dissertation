@@ -3,8 +3,8 @@
 # CUDA_VISIBLE_DEVICES=5 python3 src/train.py -r 1 -a MLP
 # CUDA_VISIBLE_DEVICES=5 python3 src/train.py -r 2 -a MLP
 # CUDA_VISIBLE_DEVICES=5 python3 src/train.py -r 3 -a MLP
-CUDA_VISIBLE_DEVICES=4 python3 src/train.py -r 4 -a MLP
-CUDA_VISIBLE_DEVICES=4 python3 src/train.py -r 5 -a MLP
+CUDA_VISIBLE_DEVICES=3 python3 src/train.py -r 4 -a MLP
+CUDA_VISIBLE_DEVICES=3 python3 src/train.py -r 5 -a MLP
 
 CUDA_VISIBLE_DEVICES=-1 python3 src/ModelTesting/run.py -r 1 -a MLP -R
 CUDA_VISIBLE_DEVICES=-1 python3 src/ModelTesting/run.py -r 2 -a MLP -R

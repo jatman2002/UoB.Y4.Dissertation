@@ -19,6 +19,10 @@ class Model:
             val_days = unique_days[val_idx:]
             val = train[booking_date.isin(val_days)]
 
+            val['BookingStartTime'] = (val['BookingStartTime'] - 36000) / (60*15)
+            val['Duration'] = val['Duration'] / (60*15)
+            val["EndTime"] = val["BookingStartTime"] + test["Duration"]
+
             return val, tables
 
         test = pd.read_csv(f'{os.getcwd()}/src/SQL-DATA/Restaurant-{self.restaurant_name}-test.csv')

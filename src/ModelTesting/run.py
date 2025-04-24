@@ -12,7 +12,7 @@ parser.add_argument('-r', dest='restaurant', type=int, help='specify which resta
 # parser.add_argument('-g', dest='gpu', type=int, default=0, help='specify which gpu to use')
 parser.add_argument('-a', dest='algo', type=str, help='specify which algorithm to use')
 parser.add_argument('-v', dest='val', action='store_true', default=False, help='use validation set')
-parser.add_argument('-R', dest='results', action='store_true', default=False, help='use validation set')
+parser.add_argument('-R', dest='results', action='store_true', default=False, help='Collalte results')
 parser.add_argument('-s', dest='start', type=int, default=0, help='start point for MLP')
 parser.add_argument('-e', dest='end', type=int, default=1, help='end point for MLP')
 args = parser.parse_args()
